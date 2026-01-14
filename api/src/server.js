@@ -34,50 +34,43 @@ const verifyToken = (req, res, next) => {
 };
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Multer configuration for image upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Cloudinary Storage for Multer
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'mbg_menu_images',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
   },
-  filename: (req, file, cb) => {
-    cb(null, `menu-${Date.now()}${path.extname(file.originalname)}`);
-  }
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error('Hanya file gambar yang diperbolehkan!'));
-  }
-});
+const upload = multer({ storage: storage });
 
-// Database connection
+// Database connection (Ensure it supports external connections via env)
 const db = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'db_mbg'
+  database: process.env.DB_NAME || 'db_mbg',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined // Support for Aiven/PlanetScale
 });
 
 db.connect(err => {
-  if (err) console.error("Database mati cek LAMPP kamu!", err.message);
-  else console.log("Database nyala!");
+  if (err) console.error("Database Connection Failed:", err.message);
+  else console.log("Database Connected!");
 });
 
-// Serve uploaded images statically
-app.use('/uploads', express.static(uploadsDir));
+// Serve uploaded images statically (Fallback for local dev or older images, not needed for Cloudinary but kept for safety if needed, can likely be removed or kept as empty middleware if path doesn't exist)
+// app.use('/uploads', express.static(uploadsDir)); // Removed as we use Cloudinary URLs now
 
 // ==================== AUTH ROUTES ====================
 
@@ -335,4 +328,8 @@ app.get('/api/stats', (req, res) => { // Maybe protect this too? Let's leave pub
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+}
+
+module.exports = app;
