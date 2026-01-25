@@ -33,6 +33,17 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+// Middleware that ensures the user is authenticated and has admin role
+const requireAdmin = (req, res, next) => {
+  // First run the token verification
+  verifyToken(req, res, () => {
+    if (req.user && req.user.role === 'admin') {
+      return next();
+    }
+    return res.status(403).json({ error: "Hanya admin yang boleh mengakses" });
+  });
+};
+
 // Ensure uploads directory exists
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -44,16 +55,36 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Cloudinary Storage for Multer
-const storage = new CloudinaryStorage({
+// Cloudinary Storage for Multer (Menu Images)
+const menuStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'mbg_menu_images',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    transformation: [
+      { width: 1200, height: 1200, crop: 'limit' },
+      { quality: 'auto:good' },
+      { fetch_format: 'auto' }
+    ],
   },
 });
 
-const upload = multer({ storage: storage });
+// Cloudinary Storage for Report Images (with compression)
+const reportStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'mbg_report_images',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    transformation: [
+      { width: 1200, height: 1200, crop: 'limit' },
+      { quality: 'auto:good' },
+      { fetch_format: 'auto' }
+    ],
+  },
+});
+
+const upload = multer({ storage: menuStorage });
+const uploadReport = multer({ storage: reportStorage });
 
 // Database connection (Ensure it supports external connections via env)
 const db = mysql.createConnection({
@@ -140,13 +171,115 @@ app.post('/api/login', (req, res) => {
   });
 });
 
+// Middleware: Admin OR Petugas Gizi
+const requireNutritionist = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'petugas gizi')) {
+      return next();
+    }
+    return res.status(403).json({ error: "Akses ditolak. Khusus Petugas Gizi." });
+  });
+};
+
+// Middleware: Admin OR Petugas Pengaduan
+const requireComplaintOfficer = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'petugas pengaduan')) {
+      return next();
+    }
+    return res.status(403).json({ error: "Akses ditolak. Khusus Petugas Pengaduan." });
+  });
+};
+
+// ==================== ADMIN ROUTES ====================
+
+// Get all users (admin only)
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+  const sql = "SELECT id, username, school_name, role FROM users";
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
+// Create User (Admin Only - can specify role)
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  const { username, password, school_name, role } = req.body;
+  
+  if (!username || !password || !school_name || !role) {
+    return res.status(400).json({ error: "Semua data wajib diisi" });
+  }
+
+  const validRoles = ['admin', 'user', 'petugas gizi', 'petugas pengaduan'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: "Role tidak valid" });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sql = "INSERT INTO users (username, password, school_name, role) VALUES (?, ?, ?, ?)";
+    
+    db.query(sql, [username, hashedPassword, school_name, role], (err, result) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: "Username sudah terdaftar" });
+        return res.status(500).json({ error: err.message });
+      }
+      res.status(201).json({ message: "User berhasil dibuat", id: result.insertId });
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Terjadi kesalahan server" });
+  }
+});
+
+// Delete User (Admin Only)
+app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+  // Prevent admin from deleting themselves check could be good, but simple delete for now
+  const sql = "DELETE FROM users WHERE id = ?";
+  db.query(sql, [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ error: "User tidak ditemukan" });
+    res.json({ message: "User berhasil dihapus" });
+  });
+});
+
 
 // ==================== MENU ROUTES ====================
 
 // Get all menus
+// Get all menus (with filters)
 app.get('/api/menus', (req, res) => {
-  const sql = "SELECT * FROM menus ORDER BY created_at DESC";
-  db.query(sql, (err, results) => {
+  const { date, month, location } = req.query;
+  let sql = "SELECT * FROM menus";
+  const params = [];
+  const conditions = [];
+
+  if (date) {
+    conditions.push("DATE(created_at) = ?");
+    params.push(date);
+  }
+
+  if (month) {
+    // month format: 'YYYY-MM' or just 'MM' (user passed 'MM'?)
+    // safest is likely 'YYYY-MM'. Let's assume frontend sends YYYY-MM
+    // or we use MONTH(created_at)
+    conditions.push("DATE_FORMAT(created_at, '%Y-%m') = ?");
+    params.push(month);
+  }
+
+  if (location) {
+    conditions.push("(location = ? OR location = 'Semua Sekolah')");
+    params.push(location);
+  }
+
+  if (conditions.length > 0) {
+    sql += " WHERE " + conditions.join(" AND ");
+  }
+
+  sql += " ORDER BY created_at DESC";
+
+  console.log('GET /api/menus Query:', { sql, params });
+
+  db.query(sql, params, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
@@ -163,27 +296,18 @@ app.get('/api/menus/:id', (req, res) => {
 });
 
 // Create new menu
-app.post('/api/menus', upload.single('image'), (req, res) => { // Modified to handle upload if needed directly or via JSON
-    // Note: Previous implementation assumed JSON payload for 'foto_url' but multer was configured. 
-    // The previous code didn't use 'upload.single' on this route.
-    // If we want to support file upload on create menu, we should use multer.
-    // BUT the original code: 
-    // app.post('/api/menus', (req, res) => { ... req.body.foto_url ... })
-    // implies separate upload for 'analyze' or maybe direct link. 
-    // Let's keep it as is for now to avoid breaking existing flow unless requested.
-    // Wait, check original file content for line 83. It didn't have upload.single. 
-    // AND check /api/analyze-menu route. It returns 'imagePath'. Frontend might send this path.
-    // So "foto_url" comes from analyed image or external.
+// Create new menu
+app.post('/api/menus', requireNutritionist, (req, res) => {
   const {
     nama_menu, deskripsi, kalori, karbohidrat, protein,
-    lemak, serat, porsi, jumlah_porsi, foto_url
+    lemak, serat, porsi, jumlah_porsi, foto_url, location
   } = req.body;
 
   const sql = `INSERT INTO menus 
-    (nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, foto_url) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    (nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, foto_url, location) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  db.query(sql, [nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, foto_url], (err, result) => {
+  db.query(sql, [nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, foto_url, location], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ 
       message: "Data Gizi berhasil disimpan", 
@@ -204,16 +328,30 @@ app.delete('/api/menus/:id', (req, res) => {
 
 // ==================== AI ANALYSIS ROUTE ====================
 
-app.post('/api/analyze-menu', upload.single('image'), async (req, res) => {
+// Multer wrapper for error handling
+const uploadMiddleware = (req, res, next) => {
+  const uploadSingle = upload.single('image');
+  uploadSingle(req, res, (err) => {
+    if (err) {
+      console.error('[CRITICAL] Multer Upload Error:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+      return res.status(500).json({ error: "Gagal upload gambar: " + err.message });
+    }
+    next();
+  });
+};
+
+app.post('/api/analyze-menu', uploadMiddleware, async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Foto tidak ditemukan" });
     }
+    
+    console.log('[DEBUG] Received file upload:', JSON.stringify(req.file, null, 2));
 
     const dataGizi = await analyzeImageGizi(req.file.path, req.file.mimetype);
     
-    // Return relative path for frontend
-    const relativePath = `/uploads/${req.file.filename}`;
+    // Return Cloudinary URL for frontend
+    const relativePath = req.file.path;
     
     res.json({
       message: "Analisis berhasil",
@@ -221,15 +359,20 @@ app.post('/api/analyze-menu', upload.single('image'), async (req, res) => {
       imagePath: relativePath
     });
   } catch (error) {
-    console.error("Error analyzing image:", error);
-    res.status(500).json({ error: error.message });
+    next(error);
   }
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('[CRITICAL] Unhandled Server Error:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+  res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
 // ==================== REPORTS ROUTES ====================
 
-// Get all reports (Joined with Menus)
-app.get('/api/reports', (req, res) => {
+// Get all reports (Complaint Officer Only)
+app.get('/api/reports', requireComplaintOfficer, (req, res) => {
   // We want to see the menu_name if linked
   const sql = `
     SELECT r.*, m.nama_menu, m.foto_url 
@@ -243,9 +386,9 @@ app.get('/api/reports', (req, res) => {
   });
 });
 
-// Create new report
+// Create new report (Public/User) - with optional image
 app.post('/api/reports', (req, res) => {
-  const { nama_pelapor, asal_sekolah, isi_laporan, menu_id } = req.body;
+  const { nama_pelapor, asal_sekolah, isi_laporan, menu_id, foto_bukti, kategori } = req.body;
   
   if (!nama_pelapor || !asal_sekolah || !isi_laporan) {
     return res.status(400).json({ error: "Semua field harus diisi" });
@@ -254,8 +397,8 @@ app.post('/api/reports', (req, res) => {
   // menu_id can be null if it's a general report, but user asked for "report sesuai dengan menu"
   // so specific reports will have menu_id.
   
-  const sql = "INSERT INTO reports (nama_pelapor, asal_sekolah, isi_laporan, menu_id) VALUES (?, ?, ?, ?)";
-  db.query(sql, [nama_pelapor, asal_sekolah, isi_laporan, menu_id || null], (err, result) => {
+  const sql = "INSERT INTO reports (nama_pelapor, asal_sekolah, isi_laporan, menu_id, foto_bukti, kategori) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(sql, [nama_pelapor, asal_sekolah, isi_laporan, menu_id || null, foto_bukti || null, kategori || 'umum'], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ 
       message: "Laporan terkirim!", 
@@ -264,11 +407,33 @@ app.post('/api/reports', (req, res) => {
   });
 });
 
-// Update report status (admin only)
-app.patch('/api/reports/:id', verifyToken, (req, res) => { // Protected
-  // Check if admin
-  if (req.user.role !== 'admin') return res.status(403).json({ error: "Hanya admin yang boleh mengubah status" });
+// Upload report image (Public)
+const uploadReportMiddleware = (req, res, next) => {
+  const uploadSingle = uploadReport.single('image');
+  uploadSingle(req, res, (err) => {
+    if (err) {
+      console.error('[CRITICAL] Report Image Upload Error:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+      return res.status(500).json({ error: "Gagal upload gambar: " + err.message });
+    }
+    next();
+  });
+};
+
+app.post('/api/reports/upload-image', uploadReportMiddleware, (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "Gambar tidak ditemukan" });
+  }
   
+  console.log('[DEBUG] Report image uploaded:', req.file.path);
+  
+  res.json({
+    message: "Upload berhasil",
+    imageUrl: req.file.path
+  });
+});
+
+// Update report status (Complaint Officer Only)
+app.patch('/api/reports/:id', requireComplaintOfficer, (req, res) => {
   const { status } = req.body;
   const validStatuses = ['pending', 'diterima', 'ditolak'];
   
@@ -284,15 +449,61 @@ app.patch('/api/reports/:id', verifyToken, (req, res) => { // Protected
   });
 });
 
-// Delete report
-app.delete('/api/reports/:id', verifyToken, (req, res) => { // Protected
-   if (req.user.role !== 'admin') return res.status(403).json({ error: "Hanya admin yang boleh menghapus" });
-
+// Delete report (Complaint Officer Only)
+app.delete('/api/reports/:id', requireComplaintOfficer, (req, res) => {
   const sql = "DELETE FROM reports WHERE id = ?";
   db.query(sql, [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     if (result.affectedRows === 0) return res.status(404).json({ error: "Laporan tidak ditemukan" });
     res.json({ message: "Laporan berhasil dihapus" });
+  });
+});
+
+// ==================== SCHOOLS ROUTES ====================
+
+// Get all schools
+app.get('/api/schools', (req, res) => {
+  const sql = "SELECT * FROM schools ORDER BY tipe DESC, nama_sekolah ASC";
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+
+// Create new school (admin only)
+app.post('/api/schools', requireAdmin, (req, res) => {
+  const { nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe } = req.body;
+  
+  if (!nama_sekolah || !latitude || !longitude) {
+    return res.status(400).json({ error: "Nama sekolah dan lokasi (lat/lng) wajib diisi" });
+  }
+
+  const sql = "INSERT INTO schools (nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(sql, [nama_sekolah, alamat, latitude, longitude, jumlah_siswa || 0, tipe || 'sekolah'], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({ message: "Data sekolah berhasil disimpan", id: result.insertId });
+  });
+});
+
+// Update school (admin only)
+app.put('/api/schools/:id', requireAdmin, (req, res) => {
+  const { nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe } = req.body;
+  
+  const sql = "UPDATE schools SET nama_sekolah=?, alamat=?, latitude=?, longitude=?, jumlah_siswa=?, tipe=? WHERE id=?";
+  db.query(sql, [nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe, req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Data tidak ditemukan" });
+    res.json({ message: "Data sekolah diperbarui" });
+  });
+});
+
+// Delete school (admin only)
+app.delete('/api/schools/:id', requireAdmin, (req, res) => {
+  const sql = "DELETE FROM schools WHERE id = ?";
+  db.query(sql, [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Data tidak ditemukan" });
+    res.json({ message: "Data sekolah dihapus" });
   });
 });
 

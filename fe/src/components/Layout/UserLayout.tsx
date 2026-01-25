@@ -1,92 +1,81 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { MdFastfood, MdRestaurantMenu, MdReport, MdRequestPage, MdArrowBack } from 'react-icons/md';
+import { MdFastfood, MdRestaurantMenu, MdReport, MdRequestPage, MdArrowBack, MdMap } from 'react-icons/md';
+import ThemeToggle from '../ThemeToggle';
 
 export default function UserLayout() {
   const location = useLocation();
   
   const navItems = [
-    { path: '/user', icon: MdRestaurantMenu, label: 'Menu Hari Ini' },
-    { path: '/user/laporan', icon: MdReport, label: 'Buat Laporan' },
-    { path: '/user/request', icon: MdRequestPage, label: 'Request Menu' },
+    { path: '/user', icon: MdRestaurantMenu, label: 'Menu' },
+    { path: '/user/history', icon: MdFastfood, label: 'Riwayat' },
+    { path: '/user/laporan', icon: MdReport, label: 'Laporan' },
+    { path: '/user/request', icon: MdRequestPage, label: 'Request' },
+    { path: '/maps', icon: MdMap, label: 'Maps' },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-main)' }}>
-      {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)',
-        padding: '16px 24px',
-        color: 'white',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-              <MdArrowBack style={{ fontSize: '20px' }} />
+    <div className="min-h-screen bg-base-100 flex flex-col font-sans transition-colors duration-300">
+      {/* Neo-Brutalist Header */}
+      <header className="sticky top-0 z-[100] bg-primary border-b-2 border-neutral text-base-100 shadow-neo-sm">
+        <div className="w-full px-4 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="p-2 bg-base-100 text-base-content border-2 border-neutral rounded-lg hover:shadow-neo-sm transition-all active:translate-y-1 active:shadow-none">
+              <MdArrowBack className="text-xl" />
             </Link>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <MdFastfood style={{ fontSize: '24px' }} />
-            </div>
-            <div>
-              <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Makan Bergizi Gratis</h1>
-              <p style={{ fontSize: '12px', opacity: 0.9, margin: 0 }}>SPPG Bandarharjo 2</p>
+            
+            <div className="flex items-center gap-2">
+               <div className="w-10 h-10 bg-secondary border-2 border-neutral rounded-full flex items-center justify-center text-neutral">
+                 <MdFastfood className="text-2xl" />
+               </div>
+               <div>
+                  <h1 className="text-xl font-black italic tracking-tighter">MBG<span className="text-secondary">APP</span></h1>
+               </div>
             </div>
           </div>
           
-          {/* Navigation */}
-          <nav style={{ display: 'flex', gap: '8px' }}>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex gap-3 items-center">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  background: location.pathname === item.path ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                  color: 'white',
-                  textDecoration: 'none',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  transition: 'all 0.2s ease'
-                }}
+                className={`flex items-center gap-2 px-5 py-2 rounded-full border-2 transition-all font-bold text-sm ${
+                  location.pathname === item.path 
+                  ? 'bg-secondary text-neutral border-neutral shadow-[2px_2px_0px_var(--shadow-color)]' 
+                  : 'bg-base-100/10 text-base-100 border-transparent hover:bg-base-100 hover:text-primary hover:border-neutral'
+                }`}
               >
-                <item.icon />
+                <item.icon className="text-lg" />
                 <span>{item.label}</span>
               </Link>
             ))}
+            <ThemeToggle />
           </nav>
         </div>
       </header>
 
       {/* Content */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 md:px-8 mb-20 md:mb-0">
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '24px',
-        color: 'var(--text-muted)',
-        fontSize: '13px',
-        borderTop: '1px solid #E8F0E8'
-      }}>
-        <p>© 2026 Badan Gizi Nasional • Lumbung Sekolah Anak Bangsa</p>
-      </footer>
+      {/* Mobile Bottom Navigation (Floating Capsule) */}
+      <nav className="md:hidden fixed bottom-6 left-4 right-4 bg-base-300 text-base-content border-2 border-neutral rounded-full px-6 py-4 flex justify-between items-center z-[100] shadow-neo-lg">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`flex flex-col items-center gap-1 transition-all ${
+              location.pathname === item.path 
+              ? 'text-primary scale-110' 
+              : 'text-muted-themed hover:text-base-content'
+            }`}
+          >
+            <item.icon className="text-2xl" />
+          </Link>
+        ))}
+        <ThemeToggle />
+      </nav>
     </div>
   );
 }

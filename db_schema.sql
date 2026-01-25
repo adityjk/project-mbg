@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS reports (
   isi_laporan TEXT NOT NULL,
   status ENUM('pending', 'diterima', 'ditolak') DEFAULT 'pending',
   menu_id INT DEFAULT NULL,
+  foto_bukti VARCHAR(512) DEFAULT NULL,
+  kategori ENUM('umum', 'kualitas_makanan', 'distribusi', 'kebersihan', 'lainnya') DEFAULT 'umum',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE SET NULL
 );

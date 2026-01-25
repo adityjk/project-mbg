@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { MdHistory, MdDelete, MdRestaurantMenu } from 'react-icons/md';
+import { MdHistory, MdDelete, MdRestaurantMenu, MdCalendarToday, MdCheck, MdClose } from 'react-icons/md';
 import { menuApi } from '../services/api';
 import type { Menu } from '../types';
+import { useConfirmDialog } from '../components/ConfirmDialog';
 
 export default function MenuHistory() {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { showConfirm, DialogComponent } = useConfirmDialog();
 
   useEffect(() => {
     fetchMenus();
@@ -23,18 +27,29 @@ export default function MenuHistory() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus menu ini?')) return;
-    
-    setDeleting(id);
-    try {
-      await menuApi.delete(id);
-      setMenus(menus.filter(m => m.id !== id));
-    } catch (error) {
-      console.error('Failed to delete menu:', error);
-    } finally {
-      setDeleting(null);
-    }
+  const handleDelete = (id: number) => {
+    showConfirm({
+      title: 'Hapus Menu',
+      message: 'Apakah kamu yakin ingin menghapus menu ini? Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+      onConfirm: async () => {
+        setDeleting(id);
+        try {
+          await menuApi.delete(id);
+          setMenus(prev => prev.filter(m => m.id !== id));
+          setSuccess('Menu berhasil dihapus!');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (error) {
+          console.error('Failed to delete menu:', error);
+          setError('Gagal menghapus menu');
+          setTimeout(() => setError(null), 3000);
+        } finally {
+          setDeleting(null);
+        }
+      },
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -49,110 +64,125 @@ export default function MenuHistory() {
 
   if (loading) {
     return (
-      <div className="fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <div className="spinner"></div>
-      </div>
+       <div className="flex justify-center items-center h-[50vh]">
+         <div className="loading loading-bars loading-lg text-primary"></div>
+       </div>
     );
   }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-8">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">
-          <MdHistory style={{ color: 'var(--accent)' }} />
-          Riwayat Menu
-        </h1>
-        <p className="page-subtitle">Daftar semua menu yang sudah dianalisis</p>
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-base-100 p-6 rounded-[2rem] border-2 border-neutral shadow-neo">
+        <div>
+           <div className="inline-flex items-center gap-2 bg-warning/20 text-warning font-bold px-3 py-1 rounded-full text-xs uppercase mb-2 border border-warning/30">
+             <MdHistory /> Arsip Data
+           </div>
+          <h1 className="text-3xl md:text-4xl font-black text-base-content">
+            RIWAYAT MENU
+          </h1>
+          <p className="text-muted-themed font-medium mt-1">Daftar lengkap semua menu yang telah dianalisis AI.</p>
+        </div>
+        <div className="bg-base-200 px-4 py-2 rounded-xl border border-base-300 font-mono text-xs font-bold text-muted-themed">
+           TOTAL: {menus.length} MENU
+        </div>
       </div>
 
       {menus.length === 0 ? (
-        <div className="card">
-          <div className="empty-state">
-            <MdRestaurantMenu className="empty-icon" />
-            <p className="empty-title">Belum ada riwayat menu</p>
-            <p className="empty-text">Mulai dengan menganalisis foto menu baru</p>
-          </div>
+        <div className="text-center py-20 bg-base-100 rounded-[2rem] border-2 border-neutral border-dashed opacity-70">
+           <MdRestaurantMenu className="text-6xl text-muted-themed mx-auto mb-4" />
+           <h2 className="text-2xl font-black text-muted-themed">RIWAYAT KOSONG</h2>
+           <p className="text-muted-themed">Belum ada data menu yang tersimpan.</p>
         </div>
       ) : (
-        <div className="grid-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {menus.map((menu) => (
-            <div key={menu.id} className="menu-card">
-              <div 
-                className="menu-card-image"
-                style={{
-                  backgroundImage: menu.foto_url 
-                    ? `url(http://localhost:5000${menu.foto_url})` 
-                    : undefined,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {!menu.foto_url && (
-                  <MdRestaurantMenu style={{ fontSize: '48px', color: 'var(--primary-light)' }} />
-                )}
-              </div>
+            <div key={menu.id} className="bg-base-100 rounded-3xl border-2 border-neutral shadow-neo overflow-hidden flex flex-col group hover:translate-y-1 hover:shadow-none transition-all duration-200">
               
-              <div className="menu-card-content">
-                <h3 className="menu-card-title">{menu.nama_menu}</h3>
-                <p className="menu-card-desc">{menu.deskripsi || 'Tidak ada deskripsi'}</p>
+              {/* Image Header */}
+              <div className="relative h-48 bg-base-200 border-b-2 border-neutral overflow-hidden">
+                {menu.foto_url ? (
+                   <img 
+                     src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                     alt={menu.nama_menu}
+                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                   />
+                ) : (
+                   <div className="w-full h-full flex items-center justify-center text-muted-themed">
+                     <MdRestaurantMenu size={48} />
+                   </div>
+                )}
                 
-                <div className="menu-card-badges">
-                  <span className="badge badge-kalori">{menu.kalori} kkal</span>
-                  <span className="badge badge-protein">{menu.protein}g protein</span>
-                  <span className="badge badge-porsi">{menu.jumlah_porsi} porsi {menu.porsi}</span>
+                <div className="absolute top-3 right-3">
+                   <span className="badge badge-sm bg-primary text-base-100 border-0 font-bold shadow-sm">
+                      {menu.kalori} kkal
+                   </span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-themed uppercase tracking-wider mb-2">
+                   <MdCalendarToday size={12} />
+                   {formatDate(menu.created_at)}
                 </div>
 
-                {/* Nutrition Details */}
-                <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '13px' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Karbohidrat:</span>
-                      <span style={{ marginLeft: '4px', fontWeight: 600 }}>{menu.karbohidrat}g</span>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Lemak:</span>
-                      <span style={{ marginLeft: '4px', fontWeight: 600 }}>{menu.lemak}g</span>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Serat:</span>
-                      <span style={{ marginLeft: '4px', fontWeight: 600 }}>{menu.serat}g</span>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
-                      <span style={{ marginLeft: '4px', fontWeight: 600 }}>{menu.protein}g</span>
-                    </div>
-                  </div>
+                <h3 className="font-black text-xl mb-2 line-clamp-1 text-base-content" title={menu.nama_menu}>
+                  {menu.nama_menu}
+                </h3>
+                
+                <p className="text-muted-themed text-sm line-clamp-2 mb-4 flex-1">
+                  {menu.deskripsi || 'Tidak ada deskripsi tersedia.'}
+                </p>
+
+                {/* Nutrition Mini Grid */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                   <NutritionMini label="PRO" value={menu.protein} color="bg-info/20 text-info" />
+                   <NutritionMini label="KAR" value={menu.karbohidrat} color="bg-warning/20 text-warning" />
+                   <NutritionMini label="LEM" value={menu.lemak} color="bg-error/20 text-error" />
                 </div>
 
-                {/* Footer */}
-                <div style={{ 
-                  marginTop: '16px', 
-                  paddingTop: '12px', 
-                  borderTop: '1px solid #E8F0E8',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                    {formatDate(menu.created_at)}
-                  </span>
-                  <button 
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(menu.id)}
-                    disabled={deleting === menu.id}
-                  >
-                    {deleting === menu.id ? '...' : <MdDelete />}
-                  </button>
+                <div className="pt-4 border-t-2 border-base-200 flex items-center justify-between">
+                   <div className="text-xs font-bold text-muted-themed">
+                      {menu.jumlah_porsi} Porsi {menu.porsi}
+                   </div>
+                   
+                   <button 
+                     onClick={() => handleDelete(menu.id)}
+                     disabled={deleting === menu.id}
+                     className="btn btn-sm btn-circle btn-ghost text-error hover:bg-error/10 hover:rotate-90 transition-transform"
+                     title="Hapus Menu"
+                   >
+                     {deleting === menu.id ? <span className="loading loading-spinner loading-xs"></span> : <MdDelete size={20} />}
+                   </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Toast Notifications */}
+      {success && (
+        <div className="fixed bottom-8 right-8 bg-success text-base-100 px-6 py-4 rounded-xl font-bold flex items-center gap-3 animate-bounce shadow-neo border-2 border-neutral z-50">
+           <MdCheck className="text-base-100" size={24} /> {success}
+        </div>
+      )}
+      {error && (
+        <div className="fixed bottom-8 right-8 bg-error text-base-100 px-6 py-4 rounded-xl font-bold flex items-center gap-3 animate-bounce shadow-neo border-2 border-neutral z-50">
+           <MdClose className="text-base-100" size={24} /> {error}
+        </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {DialogComponent}
     </div>
   );
 }
+
+const NutritionMini = ({ label, value, color }: any) => (
+  <div className={`rounded-lg p-2 text-center border border-neutral/10 ${color}`}>
+     <div className="font-black text-sm">{value}g</div>
+     <div className="text-[9px] font-bold opacity-60">{label}</div>
+  </div>
+);

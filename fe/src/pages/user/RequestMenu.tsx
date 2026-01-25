@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MdRequestPage, MdFastfood, MdCheck, MdAdd, MdRemove } from 'react-icons/md';
+import { MdRequestPage, MdFastfood, MdCheck, MdAdd, MdRemove, MdMenuBook } from 'react-icons/md';
 
 // Demo page - skeleton for future implementation
 export default function RequestMenu() {
@@ -44,129 +44,92 @@ export default function RequestMenu() {
 
   if (submitted) {
     return (
-      <div className="fade-in" style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        minHeight: '60vh',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          width: '100px',
-          height: '100px',
-          background: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '24px'
-        }}>
-          <MdCheck style={{ fontSize: '48px', color: 'var(--primary)' }} />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 bg-white rounded-[2.5rem] border-2 border-black shadow-neo animate-in fade-in zoom-in duration-300">
+        <div className="w-24 h-24 bg-accent rounded-full border-2 border-black flex items-center justify-center mb-6 shadow-neo-sm animate-bounce">
+          <MdFastfood className="text-5xl text-black" />
         </div>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px' }}>
-          Request Diterima!
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '16px', marginBottom: '16px', maxWidth: '400px' }}>
-          Terima kasih atas request menu kamu. Tim dapur akan mempertimbangkan masukan ini.
+        <h1 className="text-3xl font-black mb-4">REQUEST TERCATAT!</h1>
+        <p className="text-lg text-gray-500 font-medium mb-2 max-w-md">
+           Terima kasih! Wishlist menumu sudah kami simpan. Semoga segera tersedia ya! 😋
         </p>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '32px' }}>
-          (Ini adalah fitur demo)
-        </p>
+        <span className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-400 mb-8">
+           MODE DEMO
+        </span>
         <button 
-          className="btn btn-primary"
+          className="btn btn-primary h-12 px-8 text-black border-2 border-black shadow-neo font-bold text-lg hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
           onClick={() => {
             setSubmitted(false);
             setRequests([]);
           }}
         >
-          Request Menu Lain
+          REQUEST MENU LAIN
         </button>
       </div>
     );
   }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-8">
       {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
-        borderRadius: '20px',
-        padding: '32px',
-        marginBottom: '32px',
-        textAlign: 'center'
-      }}>
-        <MdRequestPage style={{ fontSize: '48px', color: 'var(--accent)', marginBottom: '12px' }} />
-        <h1 style={{ 
-          fontSize: '28px', 
-          fontWeight: 700, 
-          color: 'var(--accent-dark)',
-          marginBottom: '8px'
-        }}>
-          Request Menu
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>
-          Mau menu apa besok? Sampaikan request kamu!
-        </p>
-        <span style={{
-          display: 'inline-block',
-          marginTop: '12px',
-          padding: '6px 12px',
-          background: 'rgba(255, 255, 255, 0.5)',
-          borderRadius: '20px',
-          fontSize: '12px',
-          color: 'var(--text-secondary)'
-        }}>
-          🚧 Fitur Demo
-        </span>
+      <div className="bg-accent text-black p-8 rounded-[2.5rem] border-2 border-black shadow-neo overflow-hidden relative">
+         <div className="absolute top-0 right-[-20px] p-4 opacity-20 transform rotate-12">
+            <MdMenuBook size={180} />
+         </div>
+         <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-black text-accent font-black px-4 py-1 rounded-full text-xs uppercase mb-3 text-white">
+               <MdRequestPage /> Wishlist Menu
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight">REQUEST MENU</h1>
+            <p className="font-bold text-lg opacity-80 max-w-xl">
+               Lagi pengen makan apa? Kasih tau kami biar bisa dimasak minggu depan!
+               <span className="block mt-2 text-xs font-black bg-white/30 inline-block px-2 py-1 rounded uppercase border border-black/20">🚧 Fitur Demo</span>
+            </p>
+         </div>
       </div>
 
-      <div className="grid-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Request Input */}
-        <div className="card">
-          <h2 style={{ fontSize: '18px', marginBottom: '20px' }}>Tambah Request</h2>
+        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-black shadow-neo h-fit">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-3">
+             ➕ TAMBAH REQUEST
+          </h2>
           
           {/* Input */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+          <div className="flex gap-2 mb-8">
             <input
               type="text"
-              className="form-input"
-              placeholder="Ketik nama menu..."
+              className="input flex-1 border-2 border-black rounded-xl h-12 font-bold focus:shadow-neo-sm focus:outline-none transition-all placeholder:font-normal placeholder:opacity-50"
+              placeholder="Contoh: Sayur Asem..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddRequest()}
-              style={{ flex: 1 }}
             />
             <button 
-              className="btn btn-primary"
+              className="btn btn-primary h-12 w-12 p-0 rounded-xl border-2 border-black flex items-center justify-center shadow-neo-sm hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px]"
               onClick={handleAddRequest}
             >
-              <MdAdd />
+              <MdAdd size={24} />
             </button>
           </div>
 
           {/* Popular Suggestions */}
           <div>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-              Atau pilih dari saran populer:
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">
+              🔥 PILIHAN POPULER
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="flex flex-wrap gap-3">
               {popularSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    border: requests.includes(suggestion) ? '2px solid var(--primary)' : '2px solid #E8F0E8',
-                    background: requests.includes(suggestion) ? '#E8F5E9' : 'white',
-                    color: requests.includes(suggestion) ? 'var(--primary)' : 'var(--text-secondary)',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
+                  className={`
+                     px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all duration-200
+                     ${requests.includes(suggestion) 
+                        ? 'bg-secondary border-black text-black shadow-neo-sm' 
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'
+                     }
+                  `}
                 >
-                  <MdFastfood style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                   {suggestion}
                 </button>
               ))}
@@ -175,63 +138,41 @@ export default function RequestMenu() {
         </div>
 
         {/* Request List */}
-        <div className="card">
-          <h2 style={{ fontSize: '18px', marginBottom: '20px' }}>
-            Request Kamu ({requests.length})
+        <div className="bg-neutral text-white p-6 md:p-8 rounded-[2.5rem] border-2 border-black shadow-neo flex flex-col h-full min-h-[400px]">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-white">
+             🛒 WISHLIST KAMU <span className="bg-primary text-black px-2 rounded-lg text-lg border border-black">{requests.length}</span>
           </h2>
           
           {requests.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '48px 24px',
-              color: 'var(--text-muted)'
-            }}>
-              <MdFastfood style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }} />
-              <p>Belum ada request menu</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-30 py-10">
+               <MdFastfood size={80} className="mb-4" />
+               <p className="font-bold text-xl">BELUM ADA REQUEST</p>
+               <p>Pilih menu di samping dulu ya!</p>
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-                {requests.map((request) => (
+              <div className="flex-1 space-y-3 mb-6 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                {requests.map((request, idx) => (
                   <div 
-                    key={request}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      background: 'var(--bg-main)',
-                      borderRadius: '12px'
-                    }}
+                    key={`${request}-${idx}`}
+                    className="bg-white text-black p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_#333] flex justify-between items-center group hover:translate-x-1 transition-transform"
                   >
-                    <span style={{ fontWeight: 500 }}>{request}</span>
+                    <span className="font-bold text-lg">{request}</span>
                     <button
                       onClick={() => handleRemoveRequest(request)}
-                      style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: '#FFEBEE',
-                        color: 'var(--error)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
+                      className="btn btn-sm btn-circle btn-ghost text-red-500 hover:bg-red-100 hover:rotate-90 transition-transform"
                     >
-                      <MdRemove />
+                      <MdRemove size={24} />
                     </button>
                   </div>
                 ))}
               </div>
               
               <button 
-                className="btn btn-primary"
+                className="btn w-full h-14 bg-primary text-black border-2 border-black rounded-xl font-black text-xl shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-y-[4px] hover:translate-x-[4px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 onClick={handleSubmit}
-                style={{ width: '100%' }}
               >
-                Kirim Request
+                KIRIM REQUEST SEKARANG 🚀
               </button>
             </>
           )}

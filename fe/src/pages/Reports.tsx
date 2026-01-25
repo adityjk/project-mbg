@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { MdReport, MdCheck, MdClose, MdPending, MdDelete, MdSend } from 'react-icons/md';
+import { MdCheck, MdClose, MdPending, MdDelete, MdCampaign, MdSchool, MdPerson } from 'react-icons/md';
 import { reportApi } from '../services/api';
 import type { Report } from '../types';
+import { useConfirmDialog } from '../components/ConfirmDialog';
 
 export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -15,6 +16,7 @@ export default function Reports() {
   });
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { showConfirm, DialogComponent } = useConfirmDialog();
 
   useEffect(() => {
     fetchReports();
@@ -64,15 +66,26 @@ export default function Reports() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus laporan ini?')) return;
-    
-    try {
-      await reportApi.delete(id);
-      setReports(reports.filter(r => r.id !== id));
-    } catch (error) {
-      console.error('Failed to delete report:', error);
-    }
+  const handleDelete = (id: number) => {
+    showConfirm({
+      title: 'Hapus Laporan',
+      message: 'Apakah kamu yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await reportApi.delete(id);
+          setReports(prev => prev.filter(r => r.id !== id));
+          setSuccess('Laporan berhasil dihapus!');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (error) {
+          console.error('Failed to delete report:', error);
+          setError('Gagal menghapus laporan');
+          setTimeout(() => setError(null), 3000);
+        }
+      },
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -85,186 +98,194 @@ export default function Reports() {
     });
   };
 
-  const getStatusIcon = (status: Report['status']) => {
+  const getStatusBadge = (status: Report['status']) => {
     switch (status) {
-      case 'pending': return <MdPending style={{ color: 'var(--warning)' }} />;
-      case 'diterima': return <MdCheck style={{ color: 'var(--success)' }} />;
-      case 'ditolak': return <MdClose style={{ color: 'var(--error)' }} />;
+      case 'pending': 
+         return (
+            <div className="bg-warning/20 text-warning border-2 border-warning px-3 py-1 rounded-full font-black text-xs uppercase flex items-center gap-1">
+               <MdPending /> MENUNGGU
+            </div>
+         );
+      case 'diterima': 
+         return (
+            <div className="bg-success/20 text-success border-2 border-success px-3 py-1 rounded-full font-black text-xs uppercase flex items-center gap-1 transform -rotate-2">
+               <MdCheck /> DITERIMA
+            </div>
+         );
+      case 'ditolak': 
+         return (
+            <div className="bg-error/20 text-error border-2 border-error px-3 py-1 rounded-full font-black text-xs uppercase flex items-center gap-1 transform rotate-2">
+               <MdClose /> DITOLAK
+            </div>
+         );
     }
   };
 
   if (loading) {
     return (
-      <div className="fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <div className="spinner"></div>
-      </div>
+       <div className="flex justify-center items-center h-[50vh]">
+         <div className="loading loading-bars loading-lg text-primary"></div>
+       </div>
     );
   }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in space-y-8">
       {/* Header */}
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-base-100 p-6 rounded-[2rem] border-2 border-neutral shadow-neo">
         <div>
-          <h1 className="page-title">
-            <MdReport style={{ color: 'var(--secondary)' }} />
-            Laporan
+           <div className="inline-flex items-center gap-2 bg-error/10 text-error font-bold px-3 py-1 rounded-full text-xs uppercase mb-2 border border-error/20">
+             <MdCampaign /> Suara Komunitas
+           </div>
+          <h1 className="text-3xl md:text-4xl font-black text-base-content">
+             LAPORAN & ADUAN
           </h1>
-          <p className="page-subtitle">Kelola laporan dari siswa dan guru</p>
+          <p className="text-muted-themed font-medium mt-1">Daftar laporan masuk dari siswa, guru, dan masyarakat.</p>
         </div>
         <button 
-          className="btn btn-primary"
           onClick={() => setShowForm(!showForm)}
+          className={`btn h-12 px-6 rounded-xl border-2 border-neutral shadow-neo-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] font-bold flex items-center gap-2 ${showForm ? 'bg-base-300 text-base-content' : 'btn-secondary text-neutral'}`}
         >
-          {showForm ? 'Tutup Form' : 'Buat Laporan'}
+          {showForm ? <MdClose size={20} /> : <MdCampaign size={20} />}
+          {showForm ? 'BATAL' : 'BUAT LAPORAN'}
         </button>
       </div>
 
       {/* Report Form */}
       {showForm && (
-        <div className="card" style={{ marginBottom: '24px' }}>
-          <h2 style={{ marginBottom: '20px', fontSize: '18px' }}>Form Laporan Baru</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="grid-2">
-              <div className="form-group">
-                <label className="form-label">Nama Pelapor</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Masukkan nama lengkap"
-                  value={formData.nama_pelapor}
-                  onChange={(e) => setFormData({ ...formData, nama_pelapor: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Asal Sekolah</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Masukkan nama sekolah"
-                  value={formData.asal_sekolah}
-                  onChange={(e) => setFormData({ ...formData, asal_sekolah: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Isi Laporan</label>
-              <textarea
-                className="form-input form-textarea"
-                placeholder="Tuliskan laporan atau keluhan Anda..."
-                value={formData.isi_laporan}
-                onChange={(e) => setFormData({ ...formData, isi_laporan: e.target.value })}
-              />
-            </div>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
-                  Mengirim...
-                </>
-              ) : (
-                <>
-                  <MdSend />
-                  Kirim Laporan
-                </>
-              )}
-            </button>
-          </form>
+        <div className="bg-secondary/10 p-6 md:p-8 rounded-[2.5rem] border-2 border-neutral border-dashed animate-in fade-in slide-in-from-top-5">
+          <div className="bg-base-100 p-6 rounded-3xl border-2 border-neutral shadow-neo max-w-2xl mx-auto relative">
+             <h2 className="text-xl font-black mb-6 text-center text-base-content">📝 FORMULIR PENGADUAN</h2>
+             <form onSubmit={handleSubmit} className="space-y-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="form-control">
+                   <label className="label font-bold text-sm text-base-content">Nama Pelapor</label>
+                   <input
+                     type="text"
+                     className="input input-bordered border-2 border-neutral rounded-xl focus:shadow-neo-sm focus:outline-none bg-base-100 text-base-content"
+                     placeholder="John Doe"
+                     value={formData.nama_pelapor}
+                     onChange={(e) => setFormData({ ...formData, nama_pelapor: e.target.value })}
+                   />
+                 </div>
+                 <div className="form-control">
+                   <label className="label font-bold text-sm text-base-content">Asal Sekolah</label>
+                   <input
+                     type="text"
+                     className="input input-bordered border-2 border-neutral rounded-xl focus:shadow-neo-sm focus:outline-none bg-base-100 text-base-content"
+                     placeholder="SDN 1 Contoh"
+                     value={formData.asal_sekolah}
+                     onChange={(e) => setFormData({ ...formData, asal_sekolah: e.target.value })}
+                   />
+                 </div>
+               </div>
+               <div className="form-control">
+                 <label className="label font-bold text-sm text-base-content">Isi Laporan / Keluhan</label>
+                 <textarea
+                   className="textarea textarea-bordered border-2 border-neutral rounded-xl focus:shadow-neo-sm focus:outline-none h-32 bg-base-100 text-base-content"
+                   placeholder="Jelaskan detail laporan..."
+                   value={formData.isi_laporan}
+                   onChange={(e) => setFormData({ ...formData, isi_laporan: e.target.value })}
+                 />
+               </div>
+               <button 
+                 type="submit" 
+                 disabled={submitting}
+                 className="w-full btn btn-primary border-2 border-neutral shadow-neo-sm hover:shadow-none rounded-xl font-bold h-12 mt-4 text-base-100"
+               >
+                 {submitting ? 'MENGIRIM...' : 'KIRIM LAPORAN SEKARANG'}
+               </button>
+             </form>
+          </div>
         </div>
       )}
 
       {/* Reports List */}
-      {reports.length === 0 ? (
-        <div className="card">
-          <div className="empty-state">
-            <MdReport className="empty-icon" />
-            <p className="empty-title">Belum ada laporan</p>
-            <p className="empty-text">Semua laporan dari siswa akan muncul di sini</p>
+      <div className="grid grid-cols-1 gap-4">
+        {reports.length === 0 ? (
+          <div className="text-center py-20">
+             <div className="text-6xl mb-4">📭</div>
+             <p className="font-bold text-muted-themed">TIDAK ADA LAPORAN MASUK</p>
           </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {reports.map((report) => (
-            <div key={report.id} className={`report-card ${report.status}`}>
-              <div className="report-header">
-                <div>
-                  <div className="report-user">{report.nama_pelapor}</div>
-                  <div className="report-school">{report.asal_sekolah}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className={`status-badge status-${report.status}`}>
-                    {getStatusIcon(report.status)}
-                    <span style={{ marginLeft: '4px' }}>
-                      {report.status === 'pending' ? 'Menunggu' : 
-                       report.status === 'diterima' ? 'Diterima' : 'Ditolak'}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              
-              <p style={{ marginBottom: '16px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                {report.isi_laporan}
-              </p>
+        ) : (
+          reports.map((report) => (
+            <div key={report.id} className="bg-base-100 rounded-2xl border-2 border-neutral p-0 overflow-hidden hover:shadow-neo transition-shadow">
+               <div className="flex flex-col md:flex-row">
+                  {/* Left: Meta Info */}
+                  <div className="bg-base-200 border-b-2 md:border-b-0 md:border-r-2 border-neutral p-4 w-full md:w-64 flex-shrink-0 flex flex-col gap-3">
+                     <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary text-base-100 flex items-center justify-center font-bold text-xs">
+                          <MdPerson />
+                        </div>
+                        <div className="font-bold text-sm truncate text-base-content">{report.nama_pelapor}</div>
+                     </div>
+                     <div className="flex items-center gap-2 text-muted-themed">
+                        <div className="w-8 h-8 rounded-full bg-base-100 border border-neutral flex items-center justify-center font-bold text-xs">
+                          <MdSchool />
+                        </div>
+                        <div className="text-xs font-mono font-bold truncate">{report.asal_sekolah}</div>
+                     </div>
+                     <div className="mt-auto pt-2 border-t border-base-300 text-[10px] font-mono text-muted-themed">
+                        {formatDate(report.created_at)}
+                     </div>
+                  </div>
 
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                paddingTop: '12px',
-                borderTop: '1px solid #E8F0E8'
-              }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {formatDate(report.created_at)}
-                </span>
-                
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {report.status === 'pending' && (
-                    <>
-                      <button 
-                        className="btn btn-sm btn-primary"
-                        onClick={() => handleStatusChange(report.id, 'diterima')}
-                      >
-                        <MdCheck /> Terima
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleStatusChange(report.id, 'ditolak')}
-                        style={{ borderColor: 'var(--error)', color: 'var(--error)' }}
-                      >
-                        <MdClose /> Tolak
-                      </button>
-                    </>
-                  )}
-                  <button 
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(report.id)}
-                  >
-                    <MdDelete />
-                  </button>
-                </div>
-              </div>
+                  {/* Right: Content & Actions */}
+                  <div className="p-4 md:p-6 flex-1 flex flex-col">
+                     <div className="flex justify-between items-start mb-4">
+                        <div className="font-bold text-muted-themed text-xs tracking-widest mb-1">ISI LAPORAN:</div>
+                        {getStatusBadge(report.status)}
+                     </div>
+                     
+                     <p className="text-lg font-medium leading-relaxed mb-6 font-handwriting text-base-content">
+                        "{report.isi_laporan}"
+                     </p>
+
+                     <div className="mt-auto flex justify-end gap-2 border-t border-base-200 pt-4">
+                        {report.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => handleStatusChange(report.id, 'diterima')}
+                              className="btn btn-sm bg-success/20 text-success border border-success hover:bg-success hover:text-base-100"
+                            >
+                              <MdCheck /> TERIMA
+                            </button>
+                            <button 
+                              onClick={() => handleStatusChange(report.id, 'ditolak')}
+                              className="btn btn-sm bg-error/20 text-error border border-error hover:bg-error hover:text-base-100"
+                            >
+                              <MdClose /> TOLAK
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={() => handleDelete(report.id)}
+                          className="btn btn-sm btn-ghost text-error hover:bg-error/10 ml-2"
+                        >
+                          <MdDelete size={18} />
+                        </button>
+                     </div>
+                  </div>
+               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       {/* Toast Notifications */}
-      {error && (
-        <div className="toast toast-error">
-          <span style={{ color: 'var(--error)' }}>⚠</span>
-          {error}
-        </div>
-      )}
       {success && (
-        <div className="toast toast-success">
-          <MdCheck style={{ color: 'var(--success)' }} />
-          {success}
+        <div className="fixed bottom-8 right-8 bg-success text-base-100 px-6 py-4 rounded-xl font-bold flex items-center gap-3 animate-bounce shadow-neo border-2 border-neutral z-50">
+           <MdCheck className="text-base-100" size={24} /> {success}
         </div>
       )}
+      {error && (
+        <div className="fixed bottom-8 right-8 bg-error text-base-100 px-6 py-4 rounded-xl font-bold flex items-center gap-3 animate-bounce shadow-neo border-2 border-neutral z-50">
+           <MdClose className="text-base-100" size={24} /> {error}
+        </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {DialogComponent}
     </div>
   );
 }

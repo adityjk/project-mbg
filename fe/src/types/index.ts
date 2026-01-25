@@ -11,6 +11,18 @@ export interface Menu {
   porsi: 'besar' | 'kecil';
   jumlah_porsi: number;
   foto_url: string | null;
+  location?: string | null;
+  created_at: string;
+}
+
+export interface School {
+  id: number;
+  nama_sekolah: string;
+  alamat: string;
+  latitude: number;
+  longitude: number;
+  jumlah_siswa: number;
+  tipe: 'sekolah' | 'sppg';
   created_at: string;
 }
 
@@ -23,6 +35,8 @@ export interface Report {
   menu_id?: number;
   nama_menu?: string;
   foto_url?: string;
+  foto_bukti?: string;
+  kategori?: 'umum' | 'kualitas_makanan' | 'distribusi' | 'kebersihan' | 'lainnya';
   status: 'pending' | 'diterima' | 'ditolak';
   created_at: string;
 }

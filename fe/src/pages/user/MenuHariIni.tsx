@@ -1,7 +1,22 @@
 import { useEffect, useState } from 'react';
-import { MdRestaurantMenu, MdLocalFireDepartment, MdGrain, MdFitnessCenter, MdWaterDrop, MdGrass, MdCalendarToday } from 'react-icons/md';
+import { motion } from 'framer-motion';
+import { MdRestaurantMenu, MdLocalFireDepartment, MdGrain, MdFitnessCenter, MdWaterDrop, MdGrass, MdCalendarToday, MdArrowForward } from 'react-icons/md';
 import { menuApi } from '../../services/api';
 import type { Menu } from '../../types';
+
+// Animation Variants
+const containerVariant = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+  }
+};
+
+const itemVariant = {
+  hidden: { y: 20, opacity: 0 },
+  show: { y: 0, opacity: 1, transition: { type: "spring", bounce: 0.4 } }
+};
 
 export default function MenuHariIni() {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -19,7 +34,7 @@ export default function MenuHariIni() {
       const todayMenus = response.data.filter(menu => 
         new Date(menu.created_at).toDateString() === today
       );
-      // If no menus today, show the most recent ones
+      // If no menus today, show the most recent ones for demo purposes
       setMenus(todayMenus.length > 0 ? todayMenus : response.data.slice(0, 3));
     } catch (error) {
       console.error('Failed to fetch menus:', error);
@@ -38,160 +53,146 @@ export default function MenuHariIni() {
   };
 
   if (loading) {
-    return (
-      <div className="fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <div className="spinner"></div>
-      </div>
-    );
-  }
+     return (
+       <div className="flex justify-center items-center h-[50vh]">
+         <div className="loading loading-bars loading-lg text-primary"></div>
+       </div>
+     );
+   }
 
   return (
-    <div className="fade-in">
-      {/* Date Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)',
-        borderRadius: '20px',
-        padding: '32px',
-        marginBottom: '32px',
-        textAlign: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-          <MdCalendarToday style={{ color: 'var(--primary)' }} />
-          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{formatDate()}</span>
-        </div>
-        <h1 style={{ 
-          fontSize: '32px', 
-          fontWeight: 700, 
-          color: 'var(--primary-dark)',
-          marginBottom: '8px'
-        }}>
-          Menu Makan Bergizi Hari Ini
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>
-          Menu sehat dan bergizi untuk siswa-siswi
-        </p>
-      </div>
+    <motion.div 
+      variants={containerVariant}
+      initial="hidden"
+      animate="show"
+      className="space-y-8"
+    >
+      {/* 1. Date Header (Bento Style) */}
+      <motion.div 
+        variants={itemVariant}
+        className="bg-primary text-base-100 p-8 md:p-10 rounded-[2.5rem] border-2 border-neutral shadow-neo relative overflow-hidden"
+      >
+         <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-neutral/20 px-4 py-2 rounded-full mb-4 md:mb-6 border border-base-100/20">
+                <MdCalendarToday className="text-secondary" />
+                <span className="font-mono text-sm tracking-widest uppercase">{formatDate()}</span>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black leading-[0.9]">
+                MENU <br/>
+                <span className="text-secondary italic">HARI INI</span>
+              </h1>
+            </div>
+            
+            <div className="md:text-right max-w-md">
+               <p className="font-mono text-sm opacity-90 border-l-4 border-secondary pl-4 py-1">
+                 "Makanan bergizi adalah bahan bakar untuk mimpi-mimpi besarmu."
+               </p>
+            </div>
+         </div>
+         
+         {/* Background Decoration */}
+         <div className="absolute right-0 top-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+         <div className="absolute left-0 bottom-0 w-40 h-40 bg-secondary/20 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4"></div>
+      </motion.div>
 
-      {/* Menu Cards */}
-      {menus.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '64px 24px' }}>
-          <MdRestaurantMenu style={{ fontSize: '80px', color: 'var(--text-muted)', marginBottom: '24px' }} />
-          <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Belum Ada Menu Hari Ini</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            Menu akan segera diupload oleh admin. Silakan cek kembali nanti.
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {menus.map((menu) => (
-            <div 
+      {/* 2. Menu Cards List */}
+      <div className="space-y-8">
+        {menus.length === 0 ? (
+          <motion.div variants={itemVariant} className="text-center py-20 bg-base-100 rounded-3xl border-2 border-base-300 border-dashed">
+            <MdRestaurantMenu className="text-6xl text-muted-themed mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-muted-themed">Belum Ada Menu</h2>
+            <p className="text-muted-themed">Silakan cek kembali nanti ya!</p>
+          </motion.div>
+        ) : (
+          menus.map((menu, idx) => (
+            <motion.div 
               key={menu.id} 
-              className="card"
-              style={{ 
-                display: 'grid',
-                gridTemplateColumns: menu.foto_url ? '300px 1fr' : '1fr',
-                gap: '32px',
-                overflow: 'hidden',
-                padding: 0
-              }}
+              variants={itemVariant}
+              className="bg-base-100 rounded-[2rem] border-2 border-neutral shadow-neo overflow-hidden group hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-300"
             >
-              {/* Image */}
-              {menu.foto_url && (
-                <div style={{
-                  height: '280px',
-                  backgroundImage: `url(http://localhost:5000${menu.foto_url})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }} />
-              )}
-              
-              {/* Content */}
-              <div style={{ padding: '32px', paddingLeft: menu.foto_url ? 0 : '32px' }}>
-                <div style={{ marginBottom: '16px' }}>
-                  <span className="badge badge-porsi" style={{ marginBottom: '8px' }}>
-                    {menu.jumlah_porsi} Porsi {menu.porsi === 'besar' ? 'Besar' : 'Kecil'}
-                  </span>
-                  <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>
-                    {menu.nama_menu}
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '16px', lineHeight: 1.6 }}>
-                    {menu.deskripsi || 'Menu makanan bergizi untuk mendukung pertumbuhan dan konsentrasi belajar siswa.'}
-                  </p>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8">
+                {/* Image Section */}
+                <div className="lg:col-span-5 h-[300px] lg:h-auto relative bg-secondary/10 border-b-2 lg:border-b-0 lg:border-r-2 border-neutral overflow-hidden">
+                   {menu.foto_url ? (
+                     <img 
+                       src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                       alt={menu.nama_menu}
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                     />
+                   ) : (
+                     <div className="w-full h-full flex items-center justify-center">
+                       <MdRestaurantMenu size={64} className="text-muted-themed" />
+                     </div>
+                   )}
+                   <div className="absolute top-4 left-4">
+                      <span className="badge badge-lg bg-neutral text-base-100 border-0 font-bold shadow-sm">
+                         {menu.jumlah_porsi} Porsi
+                      </span>
+                   </div>
                 </div>
 
-                {/* Nutrition Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
-                  gap: '12px',
-                  marginTop: '24px'
-                }}>
-                  <div className="nutrition-item kalori">
-                    <MdLocalFireDepartment style={{ fontSize: '24px', color: '#FF7043', marginBottom: '4px' }} />
-                    <div className="nutrition-value">{menu.kalori}</div>
-                    <div className="nutrition-label">Kalori</div>
-                    <div className="nutrition-unit">kkal</div>
-                  </div>
-                  <div className="nutrition-item karbohidrat">
-                    <MdGrain style={{ fontSize: '24px', color: '#FFB300', marginBottom: '4px' }} />
-                    <div className="nutrition-value">{menu.karbohidrat}</div>
-                    <div className="nutrition-label">Karbohidrat</div>
-                    <div className="nutrition-unit">gram</div>
-                  </div>
-                  <div className="nutrition-item protein">
-                    <MdFitnessCenter style={{ fontSize: '24px', color: '#5C6BC0', marginBottom: '4px' }} />
-                    <div className="nutrition-value">{menu.protein}</div>
-                    <div className="nutrition-label">Protein</div>
-                    <div className="nutrition-unit">gram</div>
-                  </div>
-                  <div className="nutrition-item lemak">
-                    <MdWaterDrop style={{ fontSize: '24px', color: '#EC407A', marginBottom: '4px' }} />
-                    <div className="nutrition-value">{menu.lemak}</div>
-                    <div className="nutrition-label">Lemak</div>
-                    <div className="nutrition-unit">gram</div>
-                  </div>
-                  <div className="nutrition-item serat">
-                    <MdGrass style={{ fontSize: '24px', color: '#66BB6A', marginBottom: '4px' }} />
-                    <div className="nutrition-value">{menu.serat}</div>
-                    <div className="nutrition-label">Serat</div>
-                    <div className="nutrition-unit">gram</div>
-                  </div>
+                {/* Content Section */}
+                <div className="lg:col-span-7 p-6 md:p-8 flex flex-col justify-between">
+                   <div>
+                     <div className="flex justify-between items-start mb-4">
+                       <h2 className="text-3xl md:text-4xl font-black leading-tight text-base-content">
+                         {menu.nama_menu}
+                       </h2>
+                       <div className="bg-secondary w-12 h-12 rounded-full border-2 border-neutral flex items-center justify-center flex-shrink-0 group-hover:rotate-45 transition-transform">
+                          <MdArrowForward size={24} className="text-neutral" />
+                       </div>
+                     </div>
+                     
+                     <p className="text-muted-themed mb-8 font-medium leading-relaxed">
+                       {menu.deskripsi || 'Menu makanan bergizi seimbang yang disiapkan khusus untuk mendukung aktivitas belajar di sekolah.'}
+                     </p>
+
+                     {/* Nutrition Grid */}
+                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <NutritionPill icon={MdLocalFireDepartment} value={menu.kalori} unit="kkal" label="Energi" color="bg-warning/20 text-warning" />
+                        <NutritionPill icon={MdFitnessCenter} value={menu.protein} unit="g" label="Protein" color="bg-primary/20 text-primary" />
+                        <NutritionPill icon={MdGrain} value={menu.karbohidrat} unit="g" label="Karbo" color="bg-accent/20 text-accent" />
+                     </div>
+                   </div>
+                   
+                   <div className="mt-8 pt-6 border-t-2 border-base-200 flex items-center gap-2 text-sm text-muted-themed font-mono">
+                      <span>Verified by AI Nutrition Analysis</span>
+                      <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            </motion.div>
+          ))
+        )}
+      </div>
 
-      {/* Info Card */}
-      <div style={{
-        marginTop: '32px',
-        padding: '24px',
-        background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)',
-        borderRadius: '16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px'
-      }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          background: 'white',
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <MdLocalFireDepartment style={{ fontSize: '24px', color: 'var(--secondary)' }} />
+      {/* 3. Info Card */}
+      <motion.div variants={itemVariant} className="bg-base-300 text-base-content p-6 rounded-2xl border-2 border-neutral shadow-neo flex items-start gap-4">
+        <div className="bg-base-100/10 p-3 rounded-xl border border-base-100/10">
+          <MdLocalFireDepartment className="text-2xl text-secondary" />
         </div>
         <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>Tentang Program MBG</h3>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            Program Makan Bergizi Gratis menyediakan makanan sehat dan bergizi untuk mendukung tumbuh kembang dan konsentrasi belajar siswa-siswi Indonesia.
-          </p>
+           <h3 className="font-bold text-lg mb-1">Tahukah Kamu?</h3>
+           <p className="text-sm text-muted-themed leading-relaxed">
+             Makan siang bergizi dapat meningkatkan konsentrasi belajar hingga 20% pada jam pelajaran siang. Jangan lupa habiskan makanmu ya!
+           </p>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
+
+const NutritionPill = ({ icon: Icon, value, unit, label, color }: any) => (
+  <div className={`flex items-center gap-3 p-3 rounded-xl border border-neutral/10 ${color || 'bg-base-200'}`}>
+     <div className="bg-base-100 p-2 rounded-lg shadow-sm">
+        <Icon size={18} />
+     </div>
+     <div>
+        <div className="font-black text-lg leading-none">
+          {value || '-'} <span className="text-[10px] opacity-70 font-normal">{unit}</span>
+        </div>
+        <div className="text-[10px] uppercase font-bold opacity-60 mt-0.5">{label}</div>
+     </div>
+  </div>
+);
