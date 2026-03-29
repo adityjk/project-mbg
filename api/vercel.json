@@ -11,5 +11,8 @@
       "src": "/(.*)",
       "dest": "src/server.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_VERSION": "22.x"
+  }
 }

@@ -1,102 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&display=swap');
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* Import Google Fonts: Oswald (Headers) & Noto Sans (Body) */
+
 @plugin "daisyui/theme" {
-  name: "mbgTheme";
+  name: "mbgSoft";
   default: true;
   prefersdark: false;
   color-scheme: light;
-  --color-primary: #C2410C;
-  --color-secondary: #FB923C;
-  --color-accent: #FB923C;
-  --color-neutral: #E5E5E5;
-  --color-base-100: #FFF7ED;
-  --color-base-200: #FFEDD5;
+  --color-primary: #F97316;
+  --color-secondary: #FFEDD5;
+  --color-accent: #FDBA74;
+  --color-neutral: #F3F4F6;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #FFF7ED;
   --color-base-300: #FED7AA;
-  --color-base-content: #431407;
-  --color-info: #3ABFF8;
-  --color-success: #36D399;
-  --color-warning: #FBBD23;
-  --color-error: #F87272;
+  --color-base-content: #1F2937;
+  --color-info: #38BDF8;
+  --color-success: #4ADE80;
+  --color-warning: #FBBF24;
+  /* ... mbgSoft definitions ... */
+  --color-error: #F87171;
 }
 
 @plugin "daisyui/theme" {
-  name: "mbgDark";
+  name: "mbgSoftDark";
   default: false;
   prefersdark: true;
   color-scheme: dark;
-  --color-primary: #0046FF;
-  --color-secondary: #FFAC41;
-  --color-accent: #FFAC41;
-  --color-neutral: #323232;
-  --color-base-100: #000000;
-  --color-base-200: #1A1A1A;
-  --color-base-300: #323232;
-  --color-base-content: #FFFFFF;
-  --color-info: #3ABFF8;
-  --color-success: #36D399;
-  --color-warning: #FBBD23;
-  --color-error: #F87272;
+  --color-primary: #F97316;
+  --color-secondary: #475569; /* Slate-600 */
+  --color-accent: #EA580C; /* Orange-600 */
+  --color-neutral: #111827; /* Gray-900 */
+  --color-base-100: #1F2937; /* Gray-800 */
+  --color-base-200: #374151; /* Gray-700 */
+  --color-base-300: #4B5563; /* Gray-600 */
+  --color-base-content: #F3F4F6; /* Gray-100 */
+  --color-info: #0EA5E9;
+  --color-success: #22C55E;
+  --color-warning: #EAB308;
+  --color-error: #EF4444;
 }
 
 @theme {
-  --font-space-grotesk: "Space Grotesk", sans-serif;
-  --font-jetbrains: "JetBrains Mono", monospace;
+  --font-sans: "Noto Sans", sans-serif;
+  --font-display: "Oswald", sans-serif;
+  
+  --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-soft-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
+
 
 :root {
-  --shadow-color: rgba(194, 65, 12, 0.2);
-  --card-shadow-bg: #FB923C;
+  --card-shadow-bg: rgba(249, 115, 22, 0.1); /* Soft Orange Shadow */
   --badge-bg: #FFEDD5;
-  --badge-text: #C2410C;
-  --badge-border: #C2410C;
-  --badge-shadow: #C2410C;
-  --icon-circle-bg: #FFEDD5;
-  --admin-card-bg: #FFFFFF;
-  --muted-text: #9A3412;
-}
-
-[data-theme="mbgDark"] {
-  --shadow-color: rgba(0, 70, 255, 0.4);
-  --card-shadow-bg: #FFAC41;
-  --badge-bg: #323232;
-  --badge-text: #0046FF;
-  --badge-border: #0046FF;
-  --badge-shadow: #0046FF;
-  --icon-circle-bg: #323232;
-  --admin-card-bg: #0046FF;
-  --muted-text: #9B9B9B;
+  --badge-text: #F97316;
+  --badge-border: transparent;
+  --muted-text: #6B7280;
 }
 
 @layer base {
   body {
-    @apply font-sans bg-base-100 text-base-content antialiased transition-colors duration-300;
+    @apply font-sans bg-neutral text-base-content antialiased transition-colors duration-300;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-wide;
   }
 
-  /* Custom Interactive Elements */
-  .cursor-hungry {
-    @apply cursor-pointer;
+  /* Soft Cards */
+  .card-soft {
+    @apply bg-base-100 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300 border border-neutral/50;
   }
 }
 
 /* Theme-aware utility classes */
-.card-shadow-bg {
-  background-color: var(--card-shadow-bg);
-}
-
 .badge-themed {
   background-color: var(--badge-bg);
   color: var(--badge-text);
-  border-color: var(--badge-border);
-  box-shadow: 4px 4px 0px var(--badge-shadow);
-}
-
-.icon-circle-themed {
-  background-color: var(--icon-circle-bg);
-}
-
-.admin-card-themed {
-  background-color: var(--admin-card-bg);
+  border: 1px solid var(--badge-border);
+  @apply font-medium px-3 py-1 rounded-full;
 }
 
 .text-muted-themed {
@@ -104,28 +88,8 @@
 }
 
 /* Animations & Utilities */
-.stripes {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
-}
+/* Shadows defined in @theme */
 
-.shadow-neo {
-  box-shadow: 5px 5px 0px 0px var(--shadow-color);
-}
-
-.shadow-neo-sm {
-  box-shadow: 3px 3px 0px 0px var(--shadow-color);
-}
-
-.shadow-neo-lg {
-  box-shadow: 8px 8px 0px 0px var(--shadow-color);
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20;
 }

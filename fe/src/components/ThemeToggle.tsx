@@ -8,7 +8,7 @@ const getInitialTheme = () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
     return savedTheme;
   }
-  return 'mbgTheme';
+  return 'mbgSoft';
 };
 
 export default function ThemeToggle() {
@@ -20,16 +20,16 @@ export default function ThemeToggle() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'mbgTheme' ? 'mbgDark' : 'mbgTheme');
+    setTheme(prev => prev === 'mbgSoft' ? 'mbgSoftDark' : 'mbgSoft');
   };
 
   return (
     <button 
       onClick={toggleTheme}
-      className="btn btn-circle bg-base-100 border-2 border-neutral hover:bg-base-200 text-neutral shadow-neo-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-      title={theme === 'mbgTheme' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+      className="btn btn-circle bg-base-100 border-2 border-neutral hover:bg-base-200 text-base-content shadow-soft hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+      title={theme === 'mbgSoft' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
     >
-      {theme === 'mbgTheme' ? <MdDarkMode size={24} /> : <MdLightMode size={24} />}
+      {theme === 'mbgSoft' ? <MdDarkMode size={24} /> : <MdLightMode size={24} />}
     </button>
   );
 }

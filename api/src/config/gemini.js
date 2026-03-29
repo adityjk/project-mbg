@@ -10,7 +10,7 @@ if (!apiKey) {
 
 // Singleton-like initialization via module caching
 const genAI = new GoogleGenerativeAI(apiKey || "");
-// Testing gemini-2.5-flash as originally requested by user
+// Use gemini-2.5-flash for AI analysis
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 const fileToGenerativePart = async (path, mimeType) => {
@@ -18,21 +18,30 @@ const fileToGenerativePart = async (path, mimeType) => {
   // Handle Cloudinary/Remote URLs
   if (path.startsWith('http')) {
     console.log('[DEBUG] Fetching remote image...', path);
-    const response = await fetch(path);
-    console.log('[DEBUG] Cloudinary Response Status:', response.status, response.statusText);
-    
-    if (!response.ok) {
-        throw new Error(`Failed to fetch image from Cloudinary. Status: ${response.status}`);
-    }
+    try {
+      const response = await fetch(path, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      console.log('[DEBUG] Cloudinary Response Status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+          throw new Error(`Failed to fetch image from Cloudinary. Status: ${response.status} ${response.statusText}`);
+      }
 
-    const arrayBuffer = await response.arrayBuffer();
-    console.log('[DEBUG] Image fetched, converting buffer...');
-    return {
-      inlineData: {
-        data: Buffer.from(arrayBuffer).toString("base64"),
-        mimeType,
-      },
-    };
+      const arrayBuffer = await response.arrayBuffer();
+      console.log('[DEBUG] Image fetched, converting buffer...');
+      return {
+        inlineData: {
+          data: Buffer.from(arrayBuffer).toString("base64"),
+          mimeType,
+        },
+      };
+    } catch (error) {
+      console.error('[CRITICAL] Error fetching remote image:', error);
+      throw error;
+    }
   }
   
   // Handle Local Files

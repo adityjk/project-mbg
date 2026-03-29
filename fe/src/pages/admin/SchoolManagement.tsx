@@ -127,21 +127,21 @@ export default function SchoolManagement() {
   return (
     <div className="fade-in space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-white p-6 rounded-[2rem] border-2 border-black shadow-neo">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-base-100 p-6 rounded-[2rem] border-2 border-base-content/20 shadow-neo">
         <div>
            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full text-xs uppercase mb-2 border border-blue-200">
              <MdMap /> Manajemen Data
            </div>
-          <h1 className="text-3xl md:text-4xl font-black">
+          <h1 className="text-3xl md:text-4xl font-black text-base-content">
             SEKOLAH & SPPG
           </h1>
-          <p className="text-gray-500 font-medium mt-1">Kelola titik distribusi dan penerima manfaat MBG.</p>
+          <p className="text-base-content/70 font-medium mt-1">Kelola titik distribusi dan penerima manfaat MBG.</p>
         </div>
         
         {isAdmin && (
           <button 
             onClick={openAddModal}
-            className="btn btn-primary h-12 px-6 rounded-xl border-2 border-black shadow-[4px_4px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] font-bold text-white flex items-center gap-2"
+            className="btn btn-primary h-12 px-6 rounded-xl border-2 border-base-content/20 shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] font-bold text-white flex items-center gap-2"
           >
             <MdAdd size={20} className="stroke-2" /> 
             TAMBAH DATA
@@ -152,34 +152,34 @@ export default function SchoolManagement() {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {schools.map((school) => (
-          <div key={school.id} className="bg-white rounded-3xl border-2 border-black shadow-neo p-6 group hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200">
+          <div key={school.id} className="bg-base-100 rounded-3xl border-2 border-base-content/20 shadow-neo p-6 group hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-200">
             <div className="flex justify-between items-start mb-4">
-               <div className={`w-12 h-12 rounded-xl border-2 border-black flex items-center justify-center text-2xl ${
+               <div className={`w-12 h-12 rounded-xl border-2 border-base-content/20 flex items-center justify-center text-2xl ${
                   school.tipe === 'sppg' ? 'bg-green-400 text-black' : 'bg-blue-400 text-white'
                }`}>
                  {school.tipe === 'sppg' ? <MdLocalShipping /> : <MdSchool />}
                </div>
-               <span className={`text-xs font-black px-3 py-1 rounded-full border-2 border-black uppercase ${
-                  school.tipe === 'sppg' ? 'bg-green-100' : 'bg-blue-100'
+               <span className={`text-xs font-black px-3 py-1 rounded-full border-2 border-base-content/10 uppercase ${
+                  school.tipe === 'sppg' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                }`}>
                   {school.tipe}
                </span>
             </div>
             
-            <h3 className="font-black text-xl mb-2 line-clamp-1" title={school.nama_sekolah}>{school.nama_sekolah}</h3>
-            <div className="flex items-start gap-2 text-sm text-gray-500 mb-4 h-10 line-clamp-2">
-               <MdPlace className="flex-shrink-0 mt-0.5 text-gray-400" />
+            <h3 className="font-black text-xl mb-2 line-clamp-1 text-base-content" title={school.nama_sekolah}>{school.nama_sekolah}</h3>
+            <div className="flex items-start gap-2 text-sm text-base-content/70 mb-4 h-10 line-clamp-2">
+               <MdPlace className="flex-shrink-0 mt-0.5 text-base-content/40" />
                {school.alamat}
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4 grid grid-cols-2 gap-2">
+            <div className="bg-base-200 rounded-xl p-3 border border-base-content/10 mb-4 grid grid-cols-2 gap-2">
                <div>
-                  <div className="text-[10px] uppercase font-bold text-gray-400">Total Siswa</div>
-                  <div className="font-black text-lg">{school.jumlah_siswa}</div>
+                  <div className="text-[10px] uppercase font-bold text-base-content/50">Total Siswa</div>
+                  <div className="font-black text-lg text-base-content">{school.jumlah_siswa}</div>
                </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-gray-400">Koordinat</div>
-                  <div className="font-mono text-xs">
+                  <div className="text-[10px] uppercase font-bold text-base-content/50">Koordinat</div>
+                  <div className="font-mono text-xs text-base-content/80">
                     {Number(school.latitude || 0).toFixed(3)}, {Number(school.longitude || 0).toFixed(3)}
                   </div>
                </div>
@@ -189,13 +189,13 @@ export default function SchoolManagement() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => openEditModal(school)} 
-                  className="flex-1 btn btn-sm h-10 bg-white border-2 border-black font-bold hover:bg-yellow-300 hover:text-black flex items-center justify-center gap-2"
+                  className="flex-1 btn btn-sm h-10 bg-base-100 border-2 border-base-content/20 font-bold hover:bg-yellow-300 hover:text-black flex items-center justify-center gap-2 text-base-content"
                 >
                   <MdEdit /> Edit
                 </button>
                 <button 
                   onClick={() => handleDelete(school.id)} 
-                  className="btn btn-sm h-10 w-10 p-0 bg-white border-2 border-black text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center"
+                  className="btn btn-sm h-10 w-10 p-0 bg-base-100 border-2 border-base-content/20 text-error hover:bg-error hover:text-white flex items-center justify-center"
                 >
                   <MdDelete size={18} />
                 </button>
@@ -208,12 +208,12 @@ export default function SchoolManagement() {
       {/* Modal Form */}
       {modalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2rem] border-2 border-black shadow-neo-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col">
-            <div className="p-6 border-b-2 border-black bg-gray-50 flex justify-between items-center sticky top-0 z-20 rounded-t-[2rem]">
-              <h2 className="text-xl font-black">{editingSchool ? 'EDIT DATA' : 'TAMBAH DATA BARU'}</h2>
+          <div className="bg-base-100 rounded-[2rem] border-2 border-base-content/20 shadow-neo-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col">
+            <div className="p-6 border-b-2 border-base-content/10 bg-base-200/50 flex justify-between items-center sticky top-0 z-20 rounded-t-[2rem]">
+              <h2 className="text-xl font-black text-base-content">{editingSchool ? 'EDIT DATA' : 'TAMBAH DATA BARU'}</h2>
               <button 
                 onClick={() => setModalOpen(false)} 
-                className="w-10 h-10 rounded-full border-2 border-black bg-white hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors"
+                className="w-10 h-10 rounded-full border-2 border-base-content/20 bg-base-100 hover:bg-error hover:text-white flex items-center justify-center transition-colors text-base-content"
               >
                 <MdClose size={24} />
               </button>
@@ -223,9 +223,9 @@ export default function SchoolManagement() {
               {/* Left Column: Form Inputs */}
               <div className="space-y-4">
                 <div className="form-control">
-                  <label className="label font-bold text-sm">Tipe Lokasi</label>
+                  <label className="label font-bold text-sm text-base-content">Tipe Lokasi</label>
                   <select 
-                    className="select select-bordered w-full border-2 border-black focus:outline-none focus:shadow-neo-sm rounded-xl"
+                    className="select select-bordered w-full border-2 border-base-content/20 focus:outline-none focus:shadow-neo-sm rounded-xl bg-base-100 text-base-content"
                     value={formData.tipe}
                     onChange={(e) => setFormData({...formData, tipe: e.target.value as any})}
                   >
@@ -235,11 +235,11 @@ export default function SchoolManagement() {
                 </div>
 
                 <div className="form-control">
-                  <label className="label font-bold text-sm">Nama {formData.tipe === 'sekolah' ? 'Sekolah' : 'Unit'}</label>
+                  <label className="label font-bold text-sm text-base-content">Nama {formData.tipe === 'sekolah' ? 'Sekolah' : 'Unit'}</label>
                   <input 
                     type="text" 
                     required 
-                    className="input input-bordered w-full border-2 border-black focus:outline-none focus:shadow-neo-sm rounded-xl"
+                    className="input input-bordered w-full border-2 border-base-content/20 focus:outline-none focus:shadow-neo-sm rounded-xl bg-base-100 text-base-content"
                     placeholder="Contoh: SDN 1 Siwalan"
                     value={formData.nama_sekolah}
                     onChange={(e) => setFormData({...formData, nama_sekolah: e.target.value})}
@@ -247,10 +247,10 @@ export default function SchoolManagement() {
                 </div>
 
                 <div className="form-control">
-                  <label className="label font-bold text-sm">Alamat Lengkap</label>
+                  <label className="label font-bold text-sm text-base-content">Alamat Lengkap</label>
                   <textarea 
                     required 
-                    className="textarea textarea-bordered w-full border-2 border-black focus:outline-none focus:shadow-neo-sm rounded-xl h-24"
+                    className="textarea textarea-bordered w-full border-2 border-base-content/20 focus:outline-none focus:shadow-neo-sm rounded-xl h-24 bg-base-100 text-base-content"
                     placeholder="Jalan..."
                     value={formData.alamat}
                     onChange={(e) => setFormData({...formData, alamat: e.target.value})}
@@ -259,10 +259,10 @@ export default function SchoolManagement() {
 
                 {formData.tipe === 'sekolah' && (
                   <div className="form-control">
-                    <label className="label font-bold text-sm">Jumlah Siswa / Porsi</label>
+                    <label className="label font-bold text-sm text-base-content">Jumlah Siswa / Porsi</label>
                     <input 
                       type="number" 
-                      className="input input-bordered w-full border-2 border-black focus:outline-none focus:shadow-neo-sm rounded-xl"
+                      className="input input-bordered w-full border-2 border-base-content/20 focus:outline-none focus:shadow-neo-sm rounded-xl bg-base-100 text-base-content"
                       value={formData.jumlah_siswa}
                       onChange={(e) => setFormData({...formData, jumlah_siswa: parseInt(e.target.value) || 0})}
                     />
@@ -271,23 +271,23 @@ export default function SchoolManagement() {
                 
                 <div className="grid grid-cols-2 gap-4">
                    <div className="form-control">
-                      <label className="label text-xs font-bold text-gray-400">LATITUDE</label>
-                      <input type="text" readOnly value={formData.latitude} className="input input-sm bg-gray-100 border-2 border-gray-200 rounded-lg font-mono text-xs"/>
+                      <label className="label text-xs font-bold text-base-content/50">LATITUDE</label>
+                      <input type="text" readOnly value={formData.latitude} className="input input-sm bg-base-200 border-2 border-base-content/10 rounded-lg font-mono text-xs text-base-content"/>
                    </div>
                    <div className="form-control">
-                      <label className="label text-xs font-bold text-gray-400">LONGITUDE</label>
-                      <input type="text" readOnly value={formData.longitude} className="input input-sm bg-gray-100 border-2 border-gray-200 rounded-lg font-mono text-xs"/>
+                      <label className="label text-xs font-bold text-base-content/50">LONGITUDE</label>
+                      <input type="text" readOnly value={formData.longitude} className="input input-sm bg-base-200 border-2 border-base-content/10 rounded-lg font-mono text-xs text-base-content"/>
                    </div>
                 </div>
 
                 <div className="pt-4 flex gap-3">
-                   <button type="button" onClick={() => setModalOpen(false)} className="flex-1 btn bg-gray-200 border-2 border-black hover:bg-gray-300 font-bold rounded-xl h-12">BATAL</button>
-                   <button type="submit" className="flex-1 btn btn-primary border-2 border-black shadow-[2px_2px_0px_black] hover:shadow-none font-bold rounded-xl h-12 text-white">SIMPAN</button>
+                   <button type="button" onClick={() => setModalOpen(false)} className="flex-1 btn bg-base-200 border-2 border-base-content/20 hover:bg-base-300 font-bold rounded-xl h-12 text-base-content">BATAL</button>
+                   <button type="submit" className="flex-1 btn btn-primary border-2 border-base-content/20 shadow-[2px_2px_0px_rgba(0,0,0,0.2)] hover:shadow-none font-bold rounded-xl h-12 text-white">SIMPAN</button>
                 </div>
               </div>
 
               {/* Right Column: Interactive Map Picker */}
-              <div className="h-[400px] rounded-2xl overflow-hidden shadow-inner border-2 border-black relative bg-gray-50">
+              <div className="h-[400px] rounded-2xl overflow-hidden shadow-inner border-2 border-base-content/20 relative bg-base-200">
                 <MapContainer 
                   center={[formData.latitude, formData.longitude]} 
                   zoom={15} 
@@ -302,7 +302,7 @@ export default function SchoolManagement() {
                     setPosition={(pos) => setFormData({...formData, latitude: pos[0], longitude: pos[1]})} 
                   />
                 </MapContainer>
-                <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur border border-black p-3 rounded-xl text-xs text-center font-bold z-[1000] shadow-sm">
+                <div className="absolute bottom-4 left-4 right-4 bg-base-100/90 backdrop-blur border border-base-content/20 p-3 rounded-xl text-xs text-center font-bold z-[1000] shadow-sm text-base-content">
                    KLIK PETA UNTUK MENANDAI LOKASI
                 </div>
               </div>

@@ -7,13 +7,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Space Grotesk"', 'sans-serif'], 
-        mono: ['"JetBrains Mono"', 'monospace'],
+        sans: ['"Noto Sans"', 'sans-serif'], 
+        display: ['"Oswald"', 'sans-serif'],
       },
       boxShadow: {
-        'neo': '5px 5px 0px 0px var(--shadow-color)',
-        'neo-sm': '3px 3px 0px 0px var(--shadow-color)',
-        'neo-lg': '8px 8px 0px 0px var(--shadow-color)',
+        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'soft-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       }
     },
   },
@@ -21,53 +20,33 @@ export default {
   daisyui: {
     themes: [
       {
-        mbgTheme: {
-          "primary": "#C2410C", 
-          "secondary": "#FB923C",
-          "accent": "#FB923C",
-          "neutral": "#E5E5E5",
-          "base-100": "#FFF7ED",
-          "info": "#3ABFF8",
-          "success": "#36D399", 
-          "warning": "#FBBD23",
-          "error": "#F87272",
+        mbgSoft: {
+          "primary": "#F97316", // Orange-500 (Soft Orange)
+          "secondary": "#FFEDD5", // Orange-100 (Peach)
+          "accent": "#FDBA74", // Orange-300
+          "neutral": "#F3F4F6", // Gray-100
+          "base-100": "#FFFFFF", // White
+          "info": "#38BDF8", // Sky-400
+          "success": "#4ADE80", // Green-400
+          "warning": "#FBBF24", // Amber-400
+          "error": "#F87171", // Red-400
           
           "--rounded-box": "1rem", 
           "--rounded-btn": "0.5rem", 
-          "--rounded-badge": "1.9rem",
+          "--rounded-badge": "1rem",
           
-          "--animation-btn": "0.25s",
+          "--animation-btn": "0.2s",
           "--animation-input": "0.2s",
           
-          "--btn-focus-scale": "0.95",
-          "--border-btn": "2px",
-          "--tab-border": "2px",
-          "--tab-radius": "1rem",
-        },
-        mbgDark: {
-          "primary": "#0046FF", 
-          "secondary": "#FFAC41",
-          "accent": "#FFAC41",
-          "neutral": "#323232",
-          "base-100": "#000000",
-          "info": "#3ABFF8",
-          "success": "#36D399", 
-          "warning": "#FBBD23",
-          "error": "#F87272",
-          
-          "--rounded-box": "1rem", 
-          "--rounded-btn": "0.5rem", 
-          "--rounded-badge": "1.9rem",
-          
-          "--animation-btn": "0.25s",
-          "--animation-input": "0.2s",
-          
-          "--btn-focus-scale": "0.95",
-          "--border-btn": "2px",
-          "--tab-border": "2px",
-          "--tab-radius": "1rem",
+          "--btn-focus-scale": "0.98",
+          "--border-btn": "1px",
+          "--tab-border": "1px",
+          "--tab-radius": "0.5rem",
         },
       },
+      "light",
+      "dark",
+      "mbgSoftDark"
     ],
   },
 }

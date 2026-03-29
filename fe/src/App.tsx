@@ -7,6 +7,8 @@ import LandingPage from './pages/LandingPage';
 // Auth
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import UserManagement from './pages/admin/UserManagement';
 import Maps from './pages/Maps';
 
@@ -17,6 +19,7 @@ import AnalyzeMenu from './pages/AnalyzeMenu';
 import MenuHistory from './pages/MenuHistory';
 import Reports from './pages/Reports';
 import SchoolManagement from './pages/admin/SchoolManagement';
+import TimSPPGManagement from './pages/admin/TimSPPGManagement';
 
 // User Layout & Pages
 import UserLayout from './components/Layout/UserLayout';
@@ -63,6 +66,8 @@ function App() {
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Public Maps Route */}
         <Route path="/maps" element={<Maps />} />
@@ -88,22 +93,24 @@ function App() {
           <Route path="request" element={<RequestMenu />} />
         </Route>
 
-        {/* Admin Routes (Shared Layout for Admin, Nutritionist, Complaint Officer) */}
+        {/* Admin Routes (Shared Layout for Admin, Nutritionist, Complaint Officer, Super Admin) */}
         <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={['admin', 'petugas gizi', 'petugas pengaduan']}>
+          <ProtectedRoute allowedRoles={['admin', 'super_admin', 'petugas gizi', 'petugas pengaduan']}>
             <Layout />
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
           
+          {/* Super admin CANNOT access analyze - only view history */}
           <Route path="analyze" element={
              <ProtectedRoute allowedRoles={['admin', 'petugas gizi']}>
                 <AnalyzeMenu />
              </ProtectedRoute>
           } />
           
+          {/* Super admin CAN view menu history (read-only in backend) */}
           <Route path="history" element={
-             <ProtectedRoute allowedRoles={['admin', 'petugas gizi']}>
+             <ProtectedRoute allowedRoles={['admin', 'super_admin', 'petugas gizi']}>
                 <MenuHistory />
              </ProtectedRoute>
           } />
@@ -123,6 +130,12 @@ function App() {
           <Route path="schools" element={
              <ProtectedRoute allowedRoles={['admin', 'petugas gizi']}>
                 <SchoolManagement />
+             </ProtectedRoute>
+          } />
+          
+          <Route path="tim-sppg" element={
+             <ProtectedRoute allowedRoles={['admin']}>
+                <TimSPPGManagement />
              </ProtectedRoute>
           } />
         </Route>

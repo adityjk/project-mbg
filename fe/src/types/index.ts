@@ -37,8 +37,25 @@ export interface Report {
   foto_url?: string;
   foto_bukti?: string;
   kategori?: 'umum' | 'kualitas_makanan' | 'distribusi' | 'kebersihan' | 'lainnya';
+  progress?: string; // Catatan progress penanganan laporan
   status: 'pending' | 'diterima' | 'ditolak';
+  ticket_number: string; // e.g., "MBG-000009"
   created_at: string;
+}
+
+// Tim SPPG types
+export interface TimSPPG {
+  id: number;
+  nama: string;
+  jabatan: string;
+  deskripsi: string | null;
+  foto_url: string | null;
+  email: string | null;
+  telepon: string | null;
+  urutan: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // Stats from dashboard

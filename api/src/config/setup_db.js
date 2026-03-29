@@ -1,0 +1,113 @@
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+
+async function setupDatabase() {
+  let connection;
+  
+  try {
+    // Connect to MySQL server (create DB if needed)
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      multipleStatements: true
+    });
+
+    const dbName = process.env.DB_NAME || 'db_mbg';
+    
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+    await connection.query(`USE \`${dbName}\``);
+    
+    console.log(`📦 Using database: ${dbName}`);
+
+    // Create all tables
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        role ENUM('admin', 'user', 'petugas gizi', 'petugas pengaduan', 'super_admin') NOT NULL DEFAULT 'user',
+        school_name VARCHAR(255),
+        reset_token VARCHAR(10) DEFAULT NULL,
+        reset_token_expiry DATETIME DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Users table ready');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS schools (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nama_sekolah VARCHAR(255) NOT NULL,
+        alamat TEXT,
+        latitude DOUBLE NOT NULL,
+        longitude DOUBLE NOT NULL,
+        jumlah_siswa INT DEFAULT 0,
+        tipe VARCHAR(50) DEFAULT 'sekolah',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Schools table ready');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS menus (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nama_menu VARCHAR(255) NOT NULL,
+        deskripsi TEXT,
+        kalori FLOAT DEFAULT 0,
+        karbohidrat FLOAT DEFAULT 0,
+        protein FLOAT DEFAULT 0,
+        lemak FLOAT DEFAULT 0,
+        serat FLOAT DEFAULT 0,
+        porsi VARCHAR(100),
+        jumlah_porsi INT DEFAULT 0,
+        foto_url TEXT,
+        location VARCHAR(255) DEFAULT 'Semua Sekolah',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Menus table ready');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nama_pelapor VARCHAR(255) NOT NULL,
+        asal_sekolah VARCHAR(255) NOT NULL,
+        isi_laporan TEXT NOT NULL,
+        status ENUM('pending', 'diterima', 'ditolak') DEFAULT 'pending',
+        progress TEXT,
+        menu_id INT DEFAULT NULL,
+        foto_bukti TEXT,
+        kategori VARCHAR(100) DEFAULT 'umum',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_report_menu FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Reports table ready');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS tim_sppg (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nama VARCHAR(255) NOT NULL,
+        jabatan VARCHAR(255) NOT NULL,
+        deskripsi TEXT,
+        foto_url TEXT,
+        email VARCHAR(255),
+        telepon VARCHAR(50),
+        urutan INT DEFAULT 0,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Tim SPPG table ready');
+
+    console.log('🎉 Database setup complete!');
+  } catch (err) {
+    console.error('❌ Database setup failed:', err.message);
+    process.exit(1);
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+setupDatabase();

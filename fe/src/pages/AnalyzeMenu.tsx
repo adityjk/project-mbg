@@ -249,7 +249,7 @@ export default function AnalyzeMenu() {
                      </div>
                   </div>
 
-                  <p className="text-muted-themed mb-8 font-medium leading-relaxed bg-info/10 p-4 rounded-xl border border-info/20">
+                  <p className="text-base-content/80 mb-8 font-medium leading-relaxed bg-info/10 p-4 rounded-xl border border-info/20">
                     {result.deskripsi || 'Deskripsi menu tidak tersedia.'}
                   </p>
                   

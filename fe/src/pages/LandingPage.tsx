@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { MdRestaurantMenu, MdAdminPanelSettings, MdArrowForward, MdSchool, MdLocalDining, MdDashboard, MdLogout, MdCampaign, MdPeople, MdHistory } from 'react-icons/md';
+import { MdRestaurantMenu, MdAdminPanelSettings, MdArrowForward, MdSchool, MdLocalDining, MdDashboard, MdLogout, MdCampaign, MdPeople, MdHistory, MdCheckCircle } from 'react-icons/md';
 import ThemeToggle from '../components/ThemeToggle';
 import Footer from '../components/Footer';
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function LandingPage() {
       if (user.role === role || user.role === 'admin') {
         navigate(path);
       } else {
+        // Soft alert replacement (could be a toast in real app)
         alert(`Anda sedang login sebagai ${user.role}. Silakan logout untuk masuk sebagai ${role}.`);
       }
     } else {
@@ -26,170 +28,181 @@ export default function LandingPage() {
     }
   };
 
+  const containerVariant = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariant = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { type: "spring" as const, bounce: 0.4 } }
+  };
+
   return (
-    <div className="min-h-screen bg-base-100 font-sans selection:bg-primary selection:text-base-100 relative overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-neutral font-sans selection:bg-primary/20 selection:text-primary relative overflow-hidden transition-colors duration-300">
       
-      {/* Decorative Background Elements */}
-      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary rounded-full blur-[100px] opacity-20 animate-blob"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-secondary rounded-full blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
+      {/* Soft Gradient Background */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-primary/10 to-transparent rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-t from-secondary/20 to-transparent rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
 
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 w-full p-4 md:p-6 z-50 flex justify-between items-center max-w-7xl mx-auto left-0 right-0">
-         <div className="flex items-center gap-2 bg-base-100 px-4 py-2 rounded-xl border-2 border-neutral shadow-neo-sm transform hover:scale-105 transition-transform cursor-pointer">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-base-100">
-               <MdLocalDining size={20} />
-            </div>
-            <span className="font-black text-xl tracking-tight text-base-content">MBG<span className="text-primary">.GO</span></span>
-         </div>
-
-         <div className="flex items-center gap-4">
-             <ThemeToggle />
-             
-             {/* Auth Status */}
-             {token && (
-                <div className="flex gap-2">
-                   <button 
-                      onClick={() => navigate(user.role === 'admin' ? '/admin' : '/user')}
-                      className="bg-base-100 border-2 border-neutral px-4 py-2 rounded-xl font-bold hover:bg-base-200 flex items-center gap-2 shadow-neo-sm text-base-content transition-colors"
-                   >
-                      <MdDashboard /> <span className="hidden md:inline">Dashboard</span>
-                   </button>
-                   <button 
-                      onClick={handleLogout}
-                      className="bg-error text-white border-2 border-neutral px-4 py-2 rounded-xl font-bold hover:opacity-90 flex items-center gap-2 shadow-neo-sm transition-opacity"
-                   >
-                      <MdLogout />
-                   </button>
+      <nav className="fixed top-0 left-0 w-full p-4 md:p-6 z-50 transition-all duration-300 backdrop-blur-sm bg-base-100/50 border-b border-white/10 supports-[backdrop-filter]:bg-base-100/20">
+         <div className="max-w-7xl mx-auto flex justify-between items-center">
+             <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-500 rounded-xl flex items-center justify-center text-white shadow-soft">
+                   <MdLocalDining size={24} />
                 </div>
-             )}
+                <span className="font-display font-bold text-2xl tracking-tight text-base-content">MBG<span className="text-primary">.GO</span></span>
+             </div>
+
+             <div className="flex items-center gap-4">
+                 <ThemeToggle />
+                 
+                 {/* Auth Status */}
+                 {token ? (
+                    <div className="flex gap-3">
+                       <button 
+                          onClick={() => navigate(user.role === 'admin' ? '/admin' : '/user')}
+                          className="btn btn-primary btn-sm md:btn-md rounded-xl shadow-soft hover:shadow-soft-lg text-white font-bold px-6"
+                       >
+                          <MdDashboard /> <span className="hidden md:inline">Dashboard</span>
+                       </button>
+                       <button 
+                          onClick={handleLogout}
+                          className="btn btn-ghost btn-sm md:btn-md rounded-xl text-error hover:bg-error/10"
+                       >
+                          <MdLogout size={20} />
+                       </button>
+                    </div>
+                 ) : (
+                    <Link to="/login" className="btn btn-primary rounded-xl shadow-soft hover:shadow-soft-lg text-white font-bold px-6">
+                       Masuk
+                    </Link>
+                 )}
+             </div>
          </div>
       </nav>
 
       {/* Hero Content */}
-      <div className="min-h-screen flex flex-col justify-center items-center relative z-10 p-4 pt-24">
+      <motion.div 
+        variants={containerVariant}
+        initial="hidden"
+        animate="show"
+        className="min-h-screen flex flex-col justify-center items-center relative z-10 p-4 pt-32 pb-20"
+      >
         
         {/* Main Title Badge */}
-        <div className="animate-bounce-slow mb-6">
-           <span className="badge-themed border-2 px-4 py-2 rounded-full font-black text-sm uppercase tracking-widest">
-              🚀 Program Nasional 2026
+        <motion.div variants={itemVariant} className="mb-8">
+           <span className="bg-base-100/80 backdrop-blur-md px-4 py-2 md:px-5 rounded-full font-bold text-[10px] md:text-xs uppercase tracking-widest text-primary shadow-sm border border-white/50 inline-block max-w-full truncate md:overflow-visible md:whitespace-normal">
+              🚀 Program Nasional Makan Bergizi Gratis 2026
            </span>
-        </div>
+        </motion.div>
 
-        <div className="text-center max-w-4xl mx-auto mb-12 space-y-4">
-           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-base-content mb-6 drop-shadow-sm">
-              MAKAN <span className="text-base-100 inline-block transform -rotate-2 bg-primary px-4">BERGIZI</span><br/> 
-              <span className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-base-content mb-6 drop-shadow-sm">GRATIS</span>
+        <motion.div variants={itemVariant} className="text-center max-w-5xl mx-auto mb-16 space-y-6">
+           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tight text-base-content drop-shadow-sm">
+              MAKAN <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">BERGIZI</span><br/> 
+              <span className="text-base-content/90">GRATIS</span>
            </h1>
-           <p className="text-xl md:text-2xl font-bold text-muted-themed max-w-2xl mx-auto leading-relaxed">
-              Platform digital pemantauan nutrisi dan distribusi makanan untuk generasi emas Indonesia.
+           <p className="text-xl md:text-2xl font-medium text-muted-themed max-w-2xl mx-auto leading-relaxed">
+              Platform digital pemantauan nutrisi dan distribusi makanan untuk mewujudkan generasi emas Indonesia yang sehat dan cerdas.
            </p>
-        </div>
+        </motion.div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-4xl px-4">
            
            {/* Student Card */}
-           <div onClick={() => handleCardClick('/user', 'user')} className="group relative cursor-pointer">
-              <div className="absolute inset-0 card-shadow-bg rounded-[2.5rem] translate-x-3 translate-y-3 transition-transform group-hover:translate-x-4 group-hover:translate-y-4"></div>
-              <div className="relative bg-base-100 rounded-[2.5rem] border-4 border-neutral p-8 flex flex-col items-center text-center h-full hover:-translate-y-1 transition-transform overflow-hidden">
-                 <div className="absolute top-0 right-0 bg-secondary text-neutral font-black text-xs px-3 py-1 border-l-2 border-b-2 border-neutral rounded-bl-xl">
-                    SISWA / GURU
+           <motion.div variants={itemVariant} onClick={() => handleCardClick('/user', 'user')} className="group cursor-pointer">
+              <div className="relative bg-base-100 rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center text-center h-full border border-neutral/10 shadow-soft hover:shadow-soft-lg hover:-translate-y-2 transition-all duration-300">
+                 <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <MdSchool size={40} className="text-green-600" />
                  </div>
-                 <div className="w-24 h-24 icon-circle-themed rounded-full border-2 border-neutral flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <MdSchool size={48} className="text-success" />
-                 </div>
-                 <h2 className="text-2xl font-black mb-2 text-base-content">MASUK SEBAGAI SISWA</h2>
-                 <p className="text-muted-themed font-medium mb-6">Lihat menu hari ini, cek nutrisi, dan kirim laporan.</p>
-                 <div className="mt-auto flex items-center gap-2 font-black underline decoration-4 decoration-primary underline-offset-4 group-hover:decoration-secondary transition-colors text-base-content">
-                    AKSES SEKARANG <MdArrowForward />
+                 <h2 className="text-2xl font-display font-bold mb-3 text-base-content">Siswa & Guru</h2>
+                 <p className="text-muted-themed px-4 mb-8 leading-relaxed">Lihat menu harian, cek kandungan nutrisi, dan kirim laporan penerimaan makanan.</p>
+                 <div className="mt-auto inline-flex items-center gap-2 font-bold text-primary group-hover:gap-3 transition-all">
+                    <span>Akses Siswa</span> <MdArrowForward />
                  </div>
               </div>
-           </div>
+           </motion.div>
 
            {/* Admin Card */}
-           <div onClick={() => handleCardClick('/admin', 'admin')} className="group relative cursor-pointer">
-              <div className="absolute inset-0 card-shadow-bg rounded-[2.5rem] translate-x-3 translate-y-3 transition-transform group-hover:translate-x-4 group-hover:translate-y-4"></div>
-              <div className="relative admin-card-themed rounded-[2.5rem] border-4 border-neutral p-8 flex flex-col items-center text-center h-full hover:-translate-y-1 transition-transform overflow-hidden">
-                 <div className="absolute top-0 right-0 bg-base-100 text-base-content font-black text-xs px-3 py-1 border-l-2 border-b-2 border-neutral rounded-bl-xl">
-                    ADMIN ONLY
+           <motion.div variants={itemVariant} onClick={() => handleCardClick('/admin', 'admin')} className="group cursor-pointer">
+              <div className="relative bg-base-100 rounded-[2.5rem] p-8 md:p-10 flex flex-col items-center text-center h-full border border-neutral/10 shadow-soft hover:shadow-soft-lg hover:-translate-y-2 transition-all duration-300">
+                 <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <MdAdminPanelSettings size={40} className="text-blue-600" />
                  </div>
-                 <div className="w-24 h-24 bg-base-100 rounded-full border-2 border-neutral flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <MdAdminPanelSettings size={48} className="text-primary" />
-                 </div>
-                 <h2 className="text-2xl font-black mb-2 text-base-content">LOGIN STAFF / ADMIN</h2>
-                 <p className="text-muted-themed font-medium mb-6">Kelola menu, analisis AI, dan manajemen sekolah.</p>
-                 <div className="mt-auto bg-base-100 text-base-content px-6 py-2 rounded-xl font-black border-2 border-neutral group-hover:bg-primary group-hover:text-base-100 group-hover:border-primary transition-colors">
-                    LOGIN SYSTEM
+                 <h2 className="text-2xl font-display font-bold mb-3 text-base-content">Staf & Admin</h2>
+                 <p className="text-muted-themed px-4 mb-8 leading-relaxed">Kelola distribusi menu, analisis nutrisi dengan AI, dan manajemen sekolah.</p>
+                 <div className="mt-auto inline-flex items-center gap-2 font-bold text-primary group-hover:gap-3 transition-all">
+                    <span>Login Staf</span> <MdArrowForward />
                  </div>
               </div>
-           </div>
+           </motion.div>
         </div>
 
-        {/* Public Report Button */}
-        <div className="mt-12 w-full max-w-3xl px-4">
-            <Link to="/aduan" className="group block relative">
-              <div className="absolute inset-0 card-shadow-bg rounded-[2rem] translate-x-2 translate-y-2 transition-transform group-hover:translate-x-3 group-hover:translate-y-3"></div>
-              <div className="relative bg-accent dark:bg-base-100 rounded-[2rem] border-4 border-neutral p-6 flex items-center justify-between hover:-translate-y-1 transition-transform overflow-hidden">
-                 <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-base-100 rounded-full border-2 border-neutral flex items-center justify-center shrink-0">
-                       <MdCampaign size={32} className="text-accent" />
+        {/* Public Report Banner */}
+        <motion.div variants={itemVariant} className="mt-12 w-full max-w-4xl px-4">
+            <Link to="/aduan" className="group block">
+              <div className="relative bg-gradient-to-r from-base-content to-neutral-800 text-base-100 rounded-[2rem] p-8 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                 
+                 {/* Decorative circles */}
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                 
+                 <div className="flex items-center gap-6 relative z-10 mb-6 md:mb-0 text-center md:text-left">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
+                       <MdCampaign size={32} className="text-white" />
                     </div>
-                    <div className="text-left">
-                       <h3 className="text-xl font-black text-base-100 dark:text-base-content">LAYANAN PENGADUAN PUBLIK</h3>
-                       <p className="font-bold text-base-100/70 dark:text-base-content/70 text-sm">Laporkan masalah tanpa perlu login (Anonim)</p>
+                    <div>
+                       <h3 className="text-2xl font-display font-bold mb-1">Punya Keluhan?</h3>
+                       <p className="opacity-80 font-medium max-w-md">Sampaikan masalah distribusi atau kualitas makanan secara anonim.</p>
                     </div>
                  </div>
-                 <div className="bg-base-100 text-accent dark:bg-neutral p-3 rounded-full group-hover:scale-110 transition-transform">
-                    <MdArrowForward size={24} />
+                 <div className="bg-base-100 text-base-content px-6 py-3 rounded-xl font-bold flex items-center gap-2 group-hover:scale-105 transition-transform shadow-sm">
+                    Lapor Sekarang <MdArrowForward />
                  </div>
               </div>
             </Link>
-        </div>
+        </motion.div>
 
-        {/* Quick Links */}
-        <div className="mt-8 w-full max-w-3xl px-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Quick Links Grid */}
+        <motion.div variants={itemVariant} className="mt-8 w-full max-w-4xl px-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Riwayat Menu */}
-            <Link to="/menu-history" className="group relative">
-              <div className="absolute inset-0 card-shadow-bg rounded-2xl translate-x-1 translate-y-1 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
-              <div className="relative bg-base-100 rounded-2xl border-2 border-neutral p-4 flex items-center gap-4 hover:-translate-y-0.5 transition-transform">
-                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                    <MdHistory size={24} className="text-primary" />
+            <Link to="/menu-history" className="bg-base-100 rounded-3xl p-6 border border-neutral/10 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex items-center gap-4 group">
+                 <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                    <MdHistory size={24} className="text-orange-600 group-hover:text-white" />
                  </div>
                  <div className="flex-1">
-                    <h3 className="font-black text-base-content">RIWAYAT MENU</h3>
-                    <p className="text-xs text-muted-themed">Lihat menu MBG yang sudah disajikan</p>
+                    <h3 className="font-bold text-base-content group-hover:text-primary transition-colors">Riwayat Menu</h3>
+                    <p className="text-xs text-muted-themed">Arsip menu makanan</p>
                  </div>
-                 <MdArrowForward size={20} className="text-primary" />
-              </div>
+                 <MdArrowForward className="text-neutral/30 group-hover:text-primary transition-colors" />
             </Link>
 
             {/* Tim SPPG */}
-            <Link to="/tim-sppg" className="group relative">
-              <div className="absolute inset-0 card-shadow-bg rounded-2xl translate-x-1 translate-y-1 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
-              <div className="relative bg-base-100 rounded-2xl border-2 border-neutral p-4 flex items-center gap-4 hover:-translate-y-0.5 transition-transform">
-                 <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center shrink-0">
-                    <MdPeople size={24} className="text-success" />
+            <Link to="/tim-sppg" className="bg-base-100 rounded-3xl p-6 border border-neutral/10 shadow-sm hover:shadow-md hover:border-success/20 transition-all flex items-center gap-4 group">
+                 <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                    <MdPeople size={24} className="text-green-600 group-hover:text-white" />
                  </div>
                  <div className="flex-1">
-                    <h3 className="font-black text-base-content">TIM SPPG</h3>
-                    <p className="text-xs text-muted-themed">Kenali tim Satgas Pangan Gizi</p>
+                    <h3 className="font-bold text-base-content group-hover:text-green-600 transition-colors">Tim SPPG</h3>
+                    <p className="text-xs text-muted-themed">Satgas Pangan Gizi</p>
                  </div>
-                 <MdArrowForward size={20} className="text-success" />
-              </div>
+                 <MdArrowForward className="text-neutral/30 group-hover:text-green-600 transition-colors" />
             </Link>
-        </div>
+        </motion.div>
 
-      </div>
-
-      {/* Marquee Background */}
-      <div className="absolute bottom-[300px] w-full overflow-hidden border-t-2 border-neutral bg-primary py-2 rotate-1 scale-105 opacity-10 pointer-events-none">
-         <div className="whitespace-nowrap animate-marquee font-black text-6xl text-base-100 uppercase tracking-widest">
-            MAKAN SEHAT • HIDUP KUAT • GENERASI EMAS • INDONESIA MAJU • MAKAN SEHAT • HIDUP KUAT • GENERASI EMAS •
-         </div>
-      </div>
-
+      </motion.div>
+      
       {/* Footer */}
-      <Footer />
+      <div className="relative z-10">
+         <Footer />
+      </div>
     </div>
   );
 }
