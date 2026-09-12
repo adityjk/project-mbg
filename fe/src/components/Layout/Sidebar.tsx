@@ -11,6 +11,18 @@ import {
   MdPeople,
 } from 'react-icons/md';
 import ThemeToggle from '../ThemeToggle';
+import { isDemoMode } from '../../utils/demo';
+
+const FULL_ADMIN_MENU = [
+  { path: '/admin', icon: MdDashboard, label: 'Dashboard' },
+  { path: '/admin/users', icon: MdGroup, label: 'Kelola User' },
+  { path: '/admin/analyze', icon: MdRestaurantMenu, label: 'Analisis Menu' },
+  { path: '/admin/history', icon: MdHistory, label: 'Riwayat Menu' },
+  { path: '/admin/reports', icon: MdReport, label: 'Laporan' },
+  { path: '/admin/schools', icon: MdMap, label: 'Data Sekolah' },
+  { path: '/admin/tim-sppg', icon: MdPeople, label: 'Tim SPPG' },
+  { path: '/maps', icon: MdMap, label: 'Lokasi SPPG' },
+];
 
 export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const location = useLocation();
@@ -28,7 +40,9 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
     { path: '/maps', icon: MdMap, label: 'Lokasi SPPG' },
   ];
 
-  if (user.role === 'admin') {
+  if (isDemoMode || user.role === 'super_admin') {
+    menuItems = FULL_ADMIN_MENU;
+  } else if (user.role === 'admin') {
     menuItems = [
       { path: '/admin', icon: MdDashboard, label: 'Dashboard' },
       { path: '/admin/users', icon: MdGroup, label: 'Kelola User' },
@@ -93,7 +107,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose
               </div>
               <div className="overflow-hidden">
                  <div className="font-bold text-sm truncate text-base-content">{user.name || 'Admin'}</div>
-                 <div className="text-[10px] font-bold text-muted-themed bg-neutral/50 px-2 py-0.5 rounded-full inline-block mt-0.5 uppercase tracking-wide">{user.role || 'Superuser'}</div>
+                 <div className="text-[10px] font-bold text-muted-themed bg-neutral/50 px-2 py-0.5 rounded-full inline-block mt-0.5 uppercase tracking-wide">{isDemoMode ? 'Demo Mode' : user.role || 'Superuser'}</div>
               </div>
            </div>
         </div>

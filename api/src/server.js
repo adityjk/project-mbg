@@ -18,6 +18,9 @@ for (const key of recommendedEnv) {
     console.warn(`⚠️  Missing recommended env var: ${key} — some features may not work`);
   }
 }
+if (process.env.DEMO_MODE === 'true') {
+  console.warn('⚠️  DEMO_MODE aktif — otentikasi dilewati, semua akses diberikan role super_admin.');
+}
 
 // Import Middleware
 const { globalLimiter } = require('./middleware/rateLimiter');

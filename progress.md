@@ -10,13 +10,13 @@ Monorepo: `api/` (Express 5 + MySQL) + `fe/` (React 19 + Vite 7 + TypeScript)
 Checked = done. Priority: `[P0]` urgent, `[P1]` this week, `[P2]` nice-to-have.
 
 ### Demo mode toggle (in progress — for portfolio)
-- [ ] `[P0]` **Backend** — `authMiddleware.js`: when `DEMO_MODE=true`, `verifyToken` injects demo user `{ id: 0, role: 'super_admin' }` instead of rejecting (passes all role gates)
-- [ ] `[P0]` **Backend** — add `DEMO_MODE` to `.env` + `.env.example`; set `DEMO_MODE=true` on Vercel (API + FE) for the portfolio deployment
-- [ ] `[P0]` **FE** — demo flag `import.meta.env.VITE_DEMO_MODE === 'true'`; `ProtectedRoute` bypasses role checks in demo mode
-- [ ] `[P0]` **FE** — `Sidebar.tsx`: show full admin nav including `/admin/analyze` in demo mode (current `admin` role hides analyze)
-- [ ] `[P1]` **FE** — visible "Demo Mode" banner/badge on pages when active (reviewer note)
-- [ ] `[P1]` **FE** — on the Login page, in demo mode show a hint/call-to-action instead of a dead wall
-- [ ] `[P1]` **Test** — walk all admin pages + menu analysis + report flow in demo mode against real DB
+- [x] `[P0]` **Backend** — `authMiddleware.js`: when `DEMO_MODE=true`, `verifyToken` injects demo user `{ id: 0, role: 'super_admin' }` instead of rejecting (passes all role gates); valid real tokens are still honored; `server.js` warns when active
+- [x] `[P0]` **Backend** — `DEMO_MODE` added to `.env` + `.env.example`; local `api/.env` set `true`; Vercel should set `DEMO_MODE=true` (API + FE)
+- [x] `[P0]` **FE** — `src/utils/demo.ts` (`isDemoMode`, `DEMO_USER`, `DEMO_TOKEN`); `ProtectedRoute` bypasses auth/role checks in demo mode and seeds demo identity
+- [x] `[P0]` **FE** — `Sidebar.tsx`: full admin nav (incl `/admin/analyze`) shown in demo mode and for `super_admin`
+- [x] `[P1]` **FE** — persistent `DemoBanner` (floating badge) rendered once in `App.tsx` so it shows on every page
+- [x] `[P1]` **FE** — Login page: "Masuk sebagai Demo (Akses Penuh)" CTA in demo mode
+- [ ] `[P1]` **Test** — walk all admin pages + menu analysis + report flow in demo mode against real DB (blocked locally: no MySQL/MariaDB on this machine; do on Vercel or with DB running) — auth wiring verified via standalone middleware tests (7/7 pass)
 
 ### Known issues / cleanup
 - [ ] `[P1]` `schoolRoutes.js` create route — add `console.error` logging (only route missing it)
@@ -104,19 +104,15 @@ Previously the build was broken; all fixed:
 
 ## Current state / pending
 
-### In progress — Demo mode toggle (portfolio feature, per user decision)
-User answer: **Demo mode toggle** + **use real DB (allow full access)**.
+### Done — Demo mode toggle (Session 4, per user decision)
+Backend + frontend implemented (see checklist above). Local `.env` files enabled for demo:
+- `api/.env`: `DEMO_MODE=true` (gitignored)
+- `fe/.env.local`: `VITE_DEMO_MODE=true` (gitignored) — Vite dev server + preview run in demo mode
 
-Plan:
-- **Backend** `src/middleware/authMiddleware.js`:
-  - Read `DEMO_MODE` env. When true, `verifyToken` injects a demo user `{ id: 0, username: 'demo', role: 'super_admin' }` (passes `requireAdmin`, `requireNutritionist`, `requireComplaintOfficer`) instead of rejecting.
-  - Add `DEMO_MODE` to `.env` + `.env.example` (portfolio deployments set it in Vercel).
-- **Frontend**:
-  - Demo flag `import.meta.env.VITE_DEMO_MODE === 'true'`.
-  - `ProtectedRoute` in `App.tsx`: bypass in demo mode.
-  - Demo banner/badge on every page when active.
-  - Note: `Sidebar.tsx` hides admin items unless `user.role === 'admin'`; needs a demo-mode branch to show all admin links (including `/admin/analyze` which `admin` can't see, and `super_admin` frontend gates differ from backend).
-  - Dashboard `Sidebar` role logic must be extended for demo mode.
+Auth wiring verified with a standalone middleware test (7/7 pass): demo injects super_admin on missing/invalid token, `requireRole` gates pass, valid real tokens still honored, and non-demo behaviour unchanged (403/401/blocked).
+
+### Remaining for demo mode
+- Full UI walkthrough against real DB — blocked locally (no MySQL/MariaDB installed, port 3306 closed). Do on Vercel deployment or once a DB is available.
 
 ### Open issues / not yet done
 - `super_admin` login dead-end (role not handled in `authRoutes.js` login flow) — only relevant if demo mode removed; demo mode bypasses this.

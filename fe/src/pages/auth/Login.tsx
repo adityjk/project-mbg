@@ -5,6 +5,7 @@ import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdRestaurantMenu, MdHome, MdArrowForward } from 'react-icons/md';
 import ThemeToggle from '../../components/ThemeToggle';
 import { motion } from 'framer-motion';
+import { isDemoMode, DEMO_USER, DEMO_TOKEN } from '../../utils/demo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +19,12 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const enterDemo = () => {
+    localStorage.setItem('token', DEMO_TOKEN);
+    localStorage.setItem('user', JSON.stringify(DEMO_USER));
+    navigate('/admin');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +88,21 @@ const Login = () => {
               Selamat datang kembali! Silakan masuk untuk melanjutkan.
             </p>
           </div>
-          
+
+          {isDemoMode && (
+            <div className="mb-6 rounded-2xl bg-primary/5 border border-primary/20 p-4 text-center">
+              <p className="text-sm font-bold text-primary mb-1">Mode Demo Aktif</p>
+              <p className="text-xs text-muted-themed mb-3">Jelajahi semua fitur admin tanpa perlu akun.</p>
+              <button
+                type="button"
+                onClick={enterDemo}
+                className="btn btn-primary btn-sm w-full rounded-xl"
+              >
+                Masuk sebagai Demo (Akses Penuh)
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-control">
               <label className="label font-bold text-base-content text-xs uppercase tracking-wider ml-1 mb-1.5 opacity-70">Username</label>

@@ -1,5 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import DemoBanner from './components/DemoBanner';
+import { isDemoMode, DEMO_USER, DEMO_TOKEN } from './utils/demo';
 
 // Lazy-load all page components for code splitting
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -33,6 +35,14 @@ const LoadingFallback = () => (
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactElement; allowedRoles?: string[] }) => {
+  if (isDemoMode) {
+    if (!localStorage.getItem('token') || !localStorage.getItem('user')) {
+      localStorage.setItem('token', DEMO_TOKEN);
+      localStorage.setItem('user', JSON.stringify(DEMO_USER));
+    }
+    return children;
+  }
+
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   
@@ -132,6 +142,7 @@ function App() {
           } />
         </Route>
         </Routes>
+        <DemoBanner />
       </Suspense>
     </BrowserRouter>
   );

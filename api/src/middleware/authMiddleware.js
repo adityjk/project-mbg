@@ -8,13 +8,25 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
+const DEMO_USER = { id: 0, username: 'demo', role: 'super_admin', school_name: null };
+
+const injectDemoUser = (req, res, next) => {
+  req.user = DEMO_USER;
+  next();
+};
+
 // Middleware to verify token
 const verifyToken = (req, res, next) => {
   const header = req.headers['authorization'];
-  if (!header) return res.status(403).json({ error: "Akses ditolak, token tidak tersedia" });
+  if (!header) {
+    if (DEMO_MODE) return injectDemoUser(req, res, next);
+    return res.status(403).json({ error: "Akses ditolak, token tidak tersedia" });
+  }
 
   const parts = header.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    if (DEMO_MODE) return injectDemoUser(req, res, next);
     return res.status(401).json({ error: "Format token tidak valid" });
   }
 
@@ -23,6 +35,7 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
+    if (DEMO_MODE) return injectDemoUser(req, res, next);
     return res.status(401).json({ error: "Token tidak valid atau sudah kadaluarsa" });
   }
 };
