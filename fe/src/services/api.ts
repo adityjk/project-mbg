@@ -1,8 +1,7 @@
 import axios from 'axios';
-import type { Menu, Report, DashboardStats, AnalyzeResponse } from '../types';
+import type { Menu, Report, DashboardStats, AnalyzeResponse, School, TimSPPG } from '../types';
 
-// Hardcoded to /api to ensure proxy is used during debugging
-const API_BASE = '/api'; // import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -20,11 +19,30 @@ api.interceptors.request.use(
     }
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// Handle expired/unauthorized tokens globally
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
 
+// Shared multipart upload helper
+async function uploadFile<T>(url: string, file: File, fieldName = 'image'): Promise<T> {
+  const formData = new FormData();
+  formData.append(fieldName, file);
+  return api.post<T>(url, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+}
 
 // Menu API
 export const menuApi = {
@@ -33,13 +51,7 @@ export const menuApi = {
   create: (data: Partial<Menu>) => api.post<{ message: string; id: number }>('/menus', data),
   update: (id: number, data: Partial<Menu>) => api.put<{ message: string }>(`/menus/${id}`, data),
   delete: (id: number) => api.delete<{ message: string }>(`/menus/${id}`),
-  analyze: (imageFile: File) => {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    return api.post<AnalyzeResponse>('/menus/analyze-menu', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
+  analyze: (imageFile: File) => uploadFile<AnalyzeResponse>('/menus/analyze-menu', imageFile),
 };
 
 // Report API
@@ -50,13 +62,8 @@ export const reportApi = {
   updateStatus: (id: number, status: Report['status'], progress?: string) =>
     api.patch<{ message: string }>(`/reports/${id}`, { status, progress }),
   delete: (id: number) => api.delete<{ message: string }>(`/reports/${id}`),
-  uploadImage: (imageFile: File) => {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    return api.post<{ message: string; imageUrl: string }>('/reports/upload-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
+  uploadImage: (imageFile: File) =>
+    uploadFile<{ message: string; imageUrl: string }>('/reports/upload-image', imageFile),
 };
 
 // Stats API
@@ -66,37 +73,39 @@ export const statsApi = {
 
 // Auth API
 export const authApi = {
-  login: (data: any) => api.post('/login', data),
-  register: (data: any) => api.post('/register', data),
+  login: (data: { username: string; password: string }) => api.post('/login', data),
+  register: (data: { username: string; password: string; school_name: string }) => api.post('/register', data),
+};
+
+// User Management API (admin only)
+export const userApi = {
+  getAll: () => api.get<Array<{ id: number; username: string; school_name: string; role: string }>>('/admin/users'),
+  create: (data: { username: string; password: string; school_name: string; role: string }) =>
+    api.post<{ message: string; id: number }>('/admin/users', data),
+  delete: (id: number) => api.delete<{ message: string }>(`/admin/users/${id}`),
 };
 
 // School API
 export const schoolApi = {
-  getAll: () => api.get<import('../types').School[]>('/schools'),
-  create: (data: Omit<import('../types').School, 'id' | 'created_at'>) => api.post<{ message: string; id: number }>('/schools', data),
-  update: (id: number, data: Partial<import('../types').School>) => api.put<{ message: string }>(`/schools/${id}`, data),
+  getAll: () => api.get<School[]>('/schools'),
+  create: (data: Omit<School, 'id' | 'created_at'>) => api.post<{ message: string; id: number }>('/schools', data),
+  update: (id: number, data: Partial<School>) => api.put<{ message: string }>(`/schools/${id}`, data),
   delete: (id: number) => api.delete<{ message: string }>(`/schools/${id}`),
 };
 
 // Tim SPPG API
 export const timSppgApi = {
-  // Public endpoint (hanya anggota aktif)
-  getAll: () => api.get<import('../types').TimSPPG[]>('/tim-sppg'),
+  // Public endpoint (only active members)
+  getAll: () => api.get<TimSPPG[]>('/tim-sppg'),
   // Admin endpoints
-  getAllAdmin: () => api.get<import('../types').TimSPPG[]>('/admin/tim-sppg'),
-  getById: (id: number) => api.get<import('../types').TimSPPG>(`/admin/tim-sppg/${id}`),
-  create: (data: Omit<import('../types').TimSPPG, 'id' | 'created_at' | 'updated_at'>) => 
+  getAllAdmin: () => api.get<TimSPPG[]>('/admin/tim-sppg'),
+  create: (data: Omit<TimSPPG, 'id' | 'created_at' | 'updated_at'>) =>
     api.post<{ message: string; id: number }>('/admin/tim-sppg', data),
-  update: (id: number, data: Partial<import('../types').TimSPPG>) => 
+  update: (id: number, data: Partial<TimSPPG>) =>
     api.put<{ message: string }>(`/admin/tim-sppg/${id}`, data),
   delete: (id: number) => api.delete<{ message: string }>(`/admin/tim-sppg/${id}`),
-  uploadImage: (imageFile: File) => {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    return api.post<{ message: string; imageUrl: string }>('/admin/tim-sppg/upload-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
+  uploadImage: (imageFile: File) =>
+    uploadFile<{ message: string; imageUrl: string }>('/admin/tim-sppg/upload-image', imageFile),
 };
 
 export default api;

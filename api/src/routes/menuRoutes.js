@@ -3,7 +3,7 @@ const db = require('../config/db');
 const { requireNutritionist } = require('../middleware/authMiddleware');
 const { upload } = require('../config/upload');
 const { analyzeImageGizi } = require('../services/aiServices');
-const { validateCreateMenu, validateIdParam } = require('../middleware/validator');
+const { validateCreateMenu, validateUpdateMenu, validateIdParam } = require('../middleware/validator');
 
 const router = express.Router();
 
@@ -39,6 +39,7 @@ router.get('/', async (req, res) => {
     const [rows] = await db.execute(sql, params);
     res.json(rows);
   } catch (err) {
+    console.error('Get menus error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -50,6 +51,7 @@ router.get('/:id', validateIdParam, async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ error: "Menu tidak ditemukan" });
     res.json(rows[0]);
   } catch (err) {
+    console.error('Get menu error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -72,6 +74,7 @@ router.post('/', requireNutritionist, validateCreateMenu, async (req, res) => {
       id: result.insertId 
     });
   } catch (err) {
+    console.error('Create menu error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -83,12 +86,13 @@ router.delete('/:id', requireNutritionist, validateIdParam, async (req, res) => 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Menu tidak ditemukan" });
     res.json({ message: "Menu berhasil dihapus" });
   } catch (err) {
+    console.error('Delete menu error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 
 // Update menu nutrition values
-router.put('/:id', requireNutritionist, validateIdParam, async (req, res) => {
+router.put('/:id', requireNutritionist, validateIdParam, validateUpdateMenu, async (req, res) => {
   const { nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, location } = req.body;
   
   const sql = `UPDATE menus SET 
@@ -105,27 +109,19 @@ router.put('/:id', requireNutritionist, validateIdParam, async (req, res) => {
     WHERE id = ?`;
   
   try {
-    const [result] = await db.execute(sql, [nama_menu, deskripsi, kalori, karbohidrat, protein, lemak, serat, porsi, jumlah_porsi, location, req.params.id]);
+    const [result] = await db.execute(sql, [nama_menu ?? null, deskripsi ?? null, kalori ?? null, karbohidrat ?? null, protein ?? null, lemak ?? null, serat ?? null, porsi ?? null, jumlah_porsi ?? null, location ?? null, req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ error: "Menu tidak ditemukan" });
     res.json({ message: "Data menu berhasil diperbarui" });
   } catch (err) {
+    console.error('Update menu error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 
 // AI Analysis Route
-const uploadMiddleware = (req, res, next) => {
-  const uploadSingle = upload.single('image');
-  uploadSingle(req, res, (err) => {
-    if (err) {
-      console.error('[CRITICAL] Multer Upload Error:', err.message);
-      return res.status(500).json({ error: "Gagal upload gambar: " + err.message });
-    }
-    next();
-  });
-};
+const { uploadMiddleware } = require('../middleware/uploadMiddleware');
 
-router.post('/analyze-menu', uploadMiddleware, async (req, res, next) => {
+router.post('/analyze-menu', uploadMiddleware(upload), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Foto tidak ditemukan" });

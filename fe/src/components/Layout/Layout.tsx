@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { MdMenu } from 'react-icons/md';
 
-export default function Layout() {
+export default function Layout({ children }: { children?: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -19,7 +20,7 @@ export default function Layout() {
         </button>
 
         <div className="max-w-7xl mx-auto">
-          <Outlet />
+          {children ?? <Outlet />}
         </div>
       </main>
     </div>

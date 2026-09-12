@@ -6,6 +6,7 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { MdArrowBack } from 'react-icons/md';
+import { schoolApi } from '../services/api';
 
 // Fix for default marker icon not showing
 let DefaultIcon = L.icon({
@@ -36,8 +37,7 @@ const Maps = () => {
 
   const fetchLocations = async () => {
     try {
-      // Import dynamically or assume api is available
-      const response = await import('../services/api').then(m => m.schoolApi.getAll());
+      const response = await schoolApi.getAll();
       setLocations(response.data);
     } catch (error) {
       console.error('Failed to fetch map locations:', error);

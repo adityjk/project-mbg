@@ -1,42 +1,10 @@
 import { useEffect, useState } from 'react';
-import { MdHistory, MdDelete, MdRestaurantMenu, MdCalendarToday, MdCheck, MdClose, MdExpandMore, MdExpandLess, MdEdit, MdSave, MdSpa } from 'react-icons/md';
+import { MdHistory, MdDelete, MdRestaurantMenu, MdCalendarToday, MdCheck, MdClose, MdEdit, MdSave, MdSpa } from 'react-icons/md';
 import { menuApi } from '../services/api';
 import type { Menu } from '../types';
 import { useConfirmDialog } from '../components/ConfirmDialog';
-
-// Expandable Description Component
-const ExpandableDescription = ({ text, maxLength = 60 }: { text: string; maxLength?: number }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate = text.length > maxLength;
-
-  if (!shouldTruncate) {
-    return <p className="text-muted-themed text-sm leading-relaxed">{text}</p>;
-  }
-
-  return (
-    <div>
-      <p className="text-muted-themed text-sm leading-relaxed">
-        {isExpanded ? text : `${text.slice(0, maxLength)}...`}
-      </p>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-1 text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors"
-      >
-        {isExpanded ? (
-          <>
-            <MdExpandLess size={16} />
-            Tutup
-          </>
-        ) : (
-          <>
-            <MdExpandMore size={16} />
-            Baca Selengkapnya
-          </>
-        )}
-      </button>
-    </div>
-  );
-};
+import ExpandableDescription from '../components/ExpandableDescription';
+import { resolveMediaUrl } from '../utils/imageUtils';
 
 export default function MenuHistory() {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -188,7 +156,7 @@ export default function MenuHistory() {
               <div className="relative h-52 bg-neutral/10 overflow-hidden">
                 {menu.foto_url ? (
                    <img 
-                     src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                     src={resolveMediaUrl(menu.foto_url) || undefined} 
                      alt={menu.nama_menu}
                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                    />

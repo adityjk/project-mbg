@@ -1,4 +1,3 @@
-import React from 'react';
 import { MdCheck, MdClose, MdPending, MdPerson, MdSchool, MdNotes, MdEdit, MdDelete } from 'react-icons/md';
 import type { Report } from '../../types';
 

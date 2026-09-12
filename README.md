@@ -43,7 +43,7 @@ Ensure you have a MySQL database running. Import the provided SQL schema (if ava
 
 ```bash
 cd api
-npm install
+bun install
 ```
 
 Create a `.env` file in the `api` directory:
@@ -58,7 +58,7 @@ GEMINI_API_KEY=your_google_gemini_api_key
 
 Run the server:
 ```bash
-npm run dev
+bun run dev
 ```
 The backend will start at `http://localhost:3000`.
 
@@ -66,12 +66,12 @@ The backend will start at `http://localhost:3000`.
 
 ```bash
 cd fe
-npm install
+bun install
 ```
 
 Run the development server:
 ```bash
-npm run dev
+bun run dev
 ```
 The frontend will start at `http://localhost:5173`.
 

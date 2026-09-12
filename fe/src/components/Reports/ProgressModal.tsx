@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MdCheck, MdClose } from 'react-icons/md';
 import type { Report } from '../../types';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { MdVisibility, MdVisibilityOff, MdCheck, MdClose } from 'react-icons/md';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
+import { userApi } from '../../services/api';
 
 /**
  * Admin page that lists all users.
@@ -20,13 +20,9 @@ export default function UserManagement() {
   const [schoolName, setSchoolName] = useState('');
   const [role, setRole] = useState('user');
 
-  const token = localStorage.getItem('token');
-
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await userApi.getAll();
       setUsers(response.data);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Gagal memuat data pengguna');
@@ -43,13 +39,11 @@ export default function UserManagement() {
     setError(null);
     setSuccess(null);
     try {
-      await axios.post('/api/admin/users', {
+      await userApi.create({
         username,
         password,
         school_name: schoolName,
         role
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess('User berhasil dibuat!');
       setTimeout(() => setSuccess(null), 3000);
@@ -73,9 +67,7 @@ export default function UserManagement() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await axios.delete(`/api/admin/users/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          await userApi.delete(id);
           setSuccess('User berhasil dihapus!');
           setTimeout(() => setSuccess(null), 3000);
           fetchUsers();

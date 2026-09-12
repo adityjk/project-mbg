@@ -11,6 +11,7 @@ import {
   MdTrendingUp
 } from 'react-icons/md';
 import { statsApi, menuApi } from '../services/api';
+import { resolveMediaUrl } from '../utils/imageUtils';
 import type { DashboardStats, Menu } from '../types';
 
 // Animation Variants
@@ -195,7 +196,7 @@ export default function Dashboard() {
                   <div className="w-20 h-20 rounded-2xl bg-base-200 overflow-hidden relative shadow-inner">
                      {menu.foto_url ? (
                         <img 
-                          src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                          src={resolveMediaUrl(menu.foto_url) || undefined} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                           alt={menu.nama_menu}
                         />

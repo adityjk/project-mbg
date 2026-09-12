@@ -1,42 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MdRestaurantMenu, MdLocalFireDepartment, MdFitnessCenter, MdCalendarToday, MdArrowForward, MdExpandMore, MdExpandLess, MdTipsAndUpdates, MdGrain } from 'react-icons/md';
+import { MdRestaurantMenu, MdLocalFireDepartment, MdFitnessCenter, MdCalendarToday, MdArrowForward, MdTipsAndUpdates, MdGrain } from 'react-icons/md';
 import { menuApi } from '../../services/api';
+import { resolveMediaUrl } from '../../utils/imageUtils';
+import ExpandableDescription from '../../components/ExpandableDescription';
 import type { Menu } from '../../types';
-
-// Expandable Description Component
-const ExpandableDescription = ({ text, maxLength = 120 }: { text: string; maxLength?: number }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate = text.length > maxLength;
-
-  if (!shouldTruncate) {
-    return <p className="text-muted-themed font-medium leading-relaxed">{text}</p>;
-  }
-
-  return (
-    <div>
-      <p className="text-muted-themed font-medium leading-relaxed">
-        {isExpanded ? text : `${text.slice(0, maxLength)}...`}
-      </p>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-2 text-sm font-bold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
-      >
-        {isExpanded ? (
-          <>
-            <MdExpandLess size={18} />
-            Tutup
-          </>
-        ) : (
-          <>
-            <MdExpandMore size={18} />
-            Baca Selengkapnya
-          </>
-        )}
-      </button>
-    </div>
-  );
-};
 
 // Animation Variants
 const containerVariant = {
@@ -152,7 +120,7 @@ export default function MenuHariIni() {
                 <div className="lg:col-span-5 h-[300px] lg:h-auto relative bg-base-200 overflow-hidden">
                    {menu.foto_url ? (
                      <img 
-                       src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                       src={resolveMediaUrl(menu.foto_url) || undefined} 
                        alt={menu.nama_menu}
                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                      />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MdPerson, MdSchool, MdDescription, MdRestaurantMenu, MdImage, MdSend, MdClose, MdEditDocument } from 'react-icons/md';
+import { REPORT_CATEGORIES } from '../../utils/imageUtils';
 import type { Menu } from '../../types';
 
 interface UserReportFormProps {
@@ -116,11 +117,9 @@ export default function UserReportForm({
                value={formData.kategori}
                onChange={(e) => setFormData({ ...formData, kategori: e.target.value })}
              >
-               <option value="umum">Umum</option>
-               <option value="kualitas_makanan">Kualitas Makanan</option>
-               <option value="distribusi">Distribusi / Porsi</option>
-               <option value="kebersihan">Kebersihan</option>
-               <option value="lainnya">Lainnya</option>
+               {REPORT_CATEGORIES.map(cat => (
+                 <option key={cat.value} value={cat.value}>{cat.label}</option>
+               ))}
              </select>
            </div>
 

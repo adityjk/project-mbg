@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { reportApi } from '../services/api';
 import type { Report } from '../types';
 
@@ -8,6 +8,27 @@ export function useReports() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      timerRef.current.forEach(clearTimeout);
+      timerRef.current = [];
+    };
+  }, []);
+
+  const showSuccess = useCallback((msg: string) => {
+    setSuccess(msg);
+    const t = setTimeout(() => setSuccess(null), 3000);
+    timerRef.current.push(t);
+  }, []);
+
+  const showError = useCallback((msg: string) => {
+    setError(msg);
+    const t = setTimeout(() => setError(null), 3000);
+    timerRef.current.push(t);
+  }, []);
 
   const fetchReports = useCallback(async (search?: string) => {
     try {
@@ -16,83 +37,78 @@ export function useReports() {
       setReports(response.data);
     } catch (err) {
       console.error('Failed to fetch reports:', err);
-      setError('Gagal memuat laporan');
+      showError('Gagal memuat laporan');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
 
   // Debounced search - re-fetch when search query changes
-  // Using 800ms debounce to avoid too frequent reloads while typing
   useEffect(() => {
-    // Don't trigger on initial empty query
-    if (searchQuery === '') return;
+    if (searchQuery === '') {
+      // When search is cleared, refetch all reports
+      fetchReports();
+      return;
+    }
     
     const timeoutId = setTimeout(() => {
       fetchReports(searchQuery);
-    }, 800); // 800ms debounce - waits until user stops typing
+    }, 800);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, fetchReports]);
 
-  const createReport = async (data: Omit<Report, 'id' | 'status' | 'created_at' | 'ticket_number'>) => {
+  const createReport = useCallback(async (data: Omit<Report, 'id' | 'status' | 'created_at' | 'ticket_number'>) => {
     try {
       await reportApi.create(data);
-      setSuccess('Laporan berhasil dikirim!');
+      showSuccess('Laporan berhasil dikirim!');
       fetchReports(searchQuery || undefined);
-      setTimeout(() => setSuccess(null), 3000);
       return true;
     } catch (err) {
-      setError('Gagal mengirim laporan');
-      setTimeout(() => setError(null), 3000);
+      showError('Gagal mengirim laporan');
       return false;
     }
-  };
+  }, [fetchReports, searchQuery, showSuccess, showError]);
 
-  const updateStatus = async (id: number, status: Report['status'], progress?: string) => {
+  const updateStatus = useCallback(async (id: number, status: Report['status'], progress?: string) => {
     try {
       await reportApi.updateStatus(id, status, progress);
-      setReports(reports.map(r => r.id === id ? { ...r, status, progress: progress || r.progress } : r));
-      setSuccess('Status laporan diperbarui!');
-      setTimeout(() => setSuccess(null), 3000);
+      // Use functional setState to avoid stale closure over reports
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status, progress: progress || r.progress } : r));
+      showSuccess('Status laporan diperbarui!');
       return true;
     } catch (err) {
       console.error('Failed to update status:', err);
-      setError('Gagal mengupdate status');
-      setTimeout(() => setError(null), 3000);
+      showError('Gagal mengupdate status');
       return false;
     }
-  };
+  }, [showSuccess, showError]);
 
-  const deleteReport = async (id: number) => {
+  const deleteReport = useCallback(async (id: number) => {
     try {
       await reportApi.delete(id);
       setReports(prev => prev.filter(r => r.id !== id));
-      setSuccess('Laporan berhasil dihapus!');
-      setTimeout(() => setSuccess(null), 3000);
+      showSuccess('Laporan berhasil dihapus!');
       return true;
     } catch (err) {
       console.error('Failed to delete report:', err);
-      setError('Gagal menghapus laporan');
-      setTimeout(() => setError(null), 3000);
+      showError('Gagal menghapus laporan');
       return false;
     }
-  };
+  }, [showSuccess, showError]);
 
-  // Manual search trigger (for Enter key press)
-  const triggerSearch = () => {
+  const triggerSearch = useCallback(() => {
     fetchReports(searchQuery || undefined);
-  };
+  }, [fetchReports, searchQuery]);
 
-  // Clear search and reload all
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchQuery('');
     fetchReports();
-  };
+  }, [fetchReports]);
 
   return {
     reports,

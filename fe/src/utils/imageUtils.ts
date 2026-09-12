@@ -69,3 +69,35 @@ export function getImagePreviewUrl(file: File): string {
 export function revokeImagePreviewUrl(url: string): void {
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Resolve media URL from relative path.
+ * Handles Cloudinary full URLs (https://...) and relative /uploads/ paths.
+ * Falls back to VITE_API_URL env var, not hardcoded localhost.
+ */
+export function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  const base = import.meta.env.VITE_API_URL || '/api';
+  // strip leading slash from url if base already ends with /
+  return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
+}
+
+/**
+ * Generate avatar URL from name using ui-avatars.com
+ * Falls back to avatar URL if provided
+ */
+export function getAvatarUrl(nama: string, foto_url: string | null): string {
+  if (foto_url) return foto_url;
+  const colors = ['10b981', '6366f1', 'f59e0b', 'ec4899', '8b5cf6', '14b8a6'];
+  const colorIndex = nama.charCodeAt(0) % colors.length;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=${colors[colorIndex]}&color=fff&size=200`;
+}
+
+export const REPORT_CATEGORIES = [
+  { value: 'umum', label: 'Umum' },
+  { value: 'kualitas_makanan', label: 'Kualitas Makanan' },
+  { value: 'distribusi', label: 'Distribusi' },
+  { value: 'kebersihan', label: 'Kebersihan' },
+  { value: 'lainnya', label: 'Lainnya' },
+] as const;

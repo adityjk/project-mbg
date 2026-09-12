@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { MdPeople, MdAdd, MdEdit, MdDelete, MdClose, MdEmail, MdPhone, MdCheck, MdVisibilityOff, MdCloudUpload, MdPhotoCamera } from 'react-icons/md';
 import { timSppgApi } from '../../services/api';
+import { getAvatarUrl } from '../../utils/imageUtils';
 import type { TimSPPG } from '../../types';
 
 export default function TimSPPGManagement() {
@@ -57,7 +58,7 @@ export default function TimSPPGManagement() {
     setUploading(true);
     try {
       const response = await timSppgApi.uploadImage(file);
-      setFormData({ ...formData, foto_url: response.data.imageUrl });
+      setFormData({ ...formData, foto_url: response.imageUrl });
     } catch (error) {
       console.error('Failed to upload image:', error);
       alert('Gagal upload gambar');
@@ -127,14 +128,6 @@ export default function TimSPPGManagement() {
       is_active: member.is_active
     });
     setModalOpen(true);
-  };
-
-  // Generate avatar URL from name
-  const getAvatarUrl = (nama: string, foto_url: string | null) => {
-    if (foto_url) return foto_url;
-    const colors = ['10b981', '6366f1', 'f59e0b', 'ec4899', '8b5cf6', '14b8a6'];
-    const colorIndex = nama.charCodeAt(0) % colors.length;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=${colors[colorIndex]}&color=fff&size=200`;
   };
 
   if (loading) return (

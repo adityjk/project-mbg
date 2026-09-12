@@ -12,6 +12,7 @@ router.get('/', requireAdmin, async (req, res) => {
     const [rows] = await db.execute("SELECT id, username, school_name, role FROM users");
     res.json(rows);
   } catch (err) {
+    console.error('Get users error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -28,6 +29,7 @@ router.post('/', requireAdmin, validateCreateUser, async (req, res) => {
     res.status(201).json({ message: "User berhasil dibuat", id: result.insertId });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: "Username sudah terdaftar" });
+    console.error('Create user error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -39,6 +41,7 @@ router.delete('/:id', requireAdmin, validateIdParam, async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ error: "User tidak ditemukan" });
     res.json({ message: "User berhasil dihapus" });
   } catch (err) {
+    console.error('Delete user error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });

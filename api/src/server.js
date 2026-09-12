@@ -6,10 +6,16 @@ require('dotenv').config();
 
 // ========== Validate Required Env Vars ==========
 const requiredEnv = ['JWT_SECRET', 'DB_HOST', 'DB_NAME'];
+const recommendedEnv = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'GEMINI_API_KEY'];
 for (const key of requiredEnv) {
   if (!process.env[key]) {
     console.error(`❌ FATAL: Missing required env var: ${key}`);
     process.exit(1);
+  }
+}
+for (const key of recommendedEnv) {
+  if (!process.env[key]) {
+    console.warn(`⚠️  Missing recommended env var: ${key} — some features may not work`);
   }
 }
 
@@ -57,6 +63,11 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/schools', schoolRoutes);
 app.use('/api', teamRoutes);
 app.use('/api', dashboardRoutes);
+
+// ========== 404 Handler (after all API routes) ==========
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
+});
 
 // ========== Global Error Handler ==========
 app.use((err, req, res, next) => {

@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const { requireAdmin } = require('../middleware/authMiddleware');
-const { validateCreateSchool, validateIdParam } = require('../middleware/validator');
+const { validateCreateSchool, validateUpdateSchool, validateIdParam } = require('../middleware/validator');
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.get('/', async (req, res) => {
     const [rows] = await db.execute("SELECT * FROM schools ORDER BY tipe DESC, nama_sekolah ASC");
     res.json(rows);
   } catch (err) {
+    console.error('Get schools error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -29,15 +30,26 @@ router.post('/', requireAdmin, validateCreateSchool, async (req, res) => {
 });
 
 // Update school (admin only)
-router.put('/:id', requireAdmin, validateIdParam, async (req, res) => {
+router.put('/:id', requireAdmin, validateIdParam, validateUpdateSchool, async (req, res) => {
   const { nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe } = req.body;
   
+  const sql = "UPDATE schools SET nama_sekolah=?, alamat=?, latitude=?, longitude=?, jumlah_siswa=?, tipe=? WHERE id=?";
+  const params = [
+    nama_sekolah ?? null,
+    alamat ?? null,
+    latitude ?? null,
+    longitude ?? null,
+    jumlah_siswa ?? null,
+    tipe ?? null,
+    req.params.id
+  ];
+  
   try {
-    const sql = "UPDATE schools SET nama_sekolah=?, alamat=?, latitude=?, longitude=?, jumlah_siswa=?, tipe=? WHERE id=?";
-    const [result] = await db.execute(sql, [nama_sekolah, alamat, latitude, longitude, jumlah_siswa, tipe, req.params.id]);
+    const [result] = await db.execute(sql, params);
     if (result.affectedRows === 0) return res.status(404).json({ error: "Data tidak ditemukan" });
     res.json({ message: "Data sekolah diperbarui" });
   } catch (err) {
+    console.error('Update school error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });

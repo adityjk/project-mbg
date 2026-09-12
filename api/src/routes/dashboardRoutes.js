@@ -4,33 +4,32 @@ const db = require('../config/db');
 const router = express.Router();
 
 router.get('/stats', async (req, res) => {
-  const queries = {
-    totalMenus: "SELECT COUNT(*) as count FROM menus",
-    totalReports: "SELECT COUNT(*) as count FROM reports",
-    pendingReports: "SELECT COUNT(*) as count FROM reports WHERE status = 'pending'",
-    avgKalori: "SELECT AVG(kalori) as avg_val FROM menus",
-    avgProtein: "SELECT AVG(protein) as avg_val FROM menus",
-    totalPorsi: "SELECT SUM(jumlah_porsi) as total FROM menus"
-  };
+  // Single round-trip instead of 6 sequential queries
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM menus) AS totalMenus,
+      (SELECT COUNT(*) FROM reports) AS totalReports,
+      (SELECT COUNT(*) FROM reports WHERE status = 'pending') AS pendingReports,
+      (SELECT COALESCE(AVG(kalori), 0) FROM menus) AS avgKalori,
+      (SELECT COALESCE(AVG(protein), 0) FROM menus) AS avgProtein,
+      (SELECT COALESCE(SUM(jumlah_porsi), 0) FROM menus) AS totalPorsi
+  `;
 
   try {
-    const results = {};
-    
-    for (const [key, sql] of Object.entries(queries)) {
-      try {
-        const [rows] = await db.execute(sql);
-        const row = rows[0];
-        results[key] = row.count !== undefined ? row.count : 
-                       row.avg_val !== undefined ? (row.avg_val || 0) : 
-                       row.total !== undefined ? (row.total || 0) : 0;
-      } catch {
-        results[key] = 0;
-      }
-    }
-    
-    res.json(results);
+    const [rows] = await db.execute(sql);
+    const row = rows[0];
+
+    res.json({
+      totalMenus: Number(row.totalMenus) || 0,
+      totalReports: Number(row.totalReports) || 0,
+      pendingReports: Number(row.pendingReports) || 0,
+      avgKalori: Number(row.avgKalori) || 0,
+      avgProtein: Number(row.avgProtein) || 0,
+      totalPorsi: Number(row.totalPorsi) || 0
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Dashboard stats error:', err);
+    res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 

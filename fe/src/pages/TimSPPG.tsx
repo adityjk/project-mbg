@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MdHome, MdPeople, MdEmail, MdPhone } from 'react-icons/md';
 import Footer from '../components/Footer';
 import { timSppgApi } from '../services/api';
+import { getAvatarUrl } from '../utils/imageUtils';
 import type { TimSPPG } from '../types';
 import { motion } from 'framer-motion';
 
@@ -23,14 +24,6 @@ export default function TimSPPGPublic() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Generate avatar URL from name
-  const getAvatarUrl = (nama: string, foto_url: string | null) => {
-    if (foto_url) return foto_url;
-    const colors = ['10b981', '6366f1', 'f59e0b', 'ec4899', '8b5cf6', '14b8a6'];
-    const colorIndex = nama.charCodeAt(0) % colors.length;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=${colors[colorIndex]}&color=fff&size=200`;
   };
 
   const containerVariant = {

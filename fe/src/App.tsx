@@ -1,35 +1,35 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Landing
-import LandingPage from './pages/LandingPage';
+// Lazy-load all page components for code splitting
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Register = lazy(() => import('./pages/auth/Register'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const Maps = lazy(() => import('./pages/Maps'));
+const Layout = lazy(() => import('./components/Layout/Layout'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const AnalyzeMenu = lazy(() => import('./pages/AnalyzeMenu'));
+const MenuHistory = lazy(() => import('./pages/MenuHistory'));
+const Reports = lazy(() => import('./pages/Reports'));
+const SchoolManagement = lazy(() => import('./pages/admin/SchoolManagement'));
+const TimSPPGManagement = lazy(() => import('./pages/admin/TimSPPGManagement'));
+const UserLayout = lazy(() => import('./components/Layout/UserLayout'));
+const MenuHariIni = lazy(() => import('./pages/user/MenuHariIni'));
+const HistorySiswa = lazy(() => import('./pages/user/HistorySiswa'));
+const UserLaporan = lazy(() => import('./pages/user/UserLaporan'));
+const RequestMenu = lazy(() => import('./pages/user/RequestMenu'));
+const PublicLaporan = lazy(() => import('./pages/PublicLaporan'));
+const PublicMenuHistory = lazy(() => import('./pages/PublicMenuHistory'));
+const TimSPPG = lazy(() => import('./pages/TimSPPG'));
 
-// Auth
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import UserManagement from './pages/admin/UserManagement';
-import Maps from './pages/Maps';
-
-// Admin Layout & Pages
-import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard';
-import AnalyzeMenu from './pages/AnalyzeMenu';
-import MenuHistory from './pages/MenuHistory';
-import Reports from './pages/Reports';
-import SchoolManagement from './pages/admin/SchoolManagement';
-import TimSPPGManagement from './pages/admin/TimSPPGManagement';
-
-// User Layout & Pages
-import UserLayout from './components/Layout/UserLayout';
-import MenuHariIni from './pages/user/MenuHariIni';
-import HistorySiswa from './pages/user/HistorySiswa';
-import UserLaporan from './pages/user/UserLaporan';
-import RequestMenu from './pages/user/RequestMenu';
-import PublicLaporan from './pages/PublicLaporan';
-import PublicMenuHistory from './pages/PublicMenuHistory';
-import TimSPPG from './pages/TimSPPG';
+const LoadingFallback = () => (
+  <div className="flex justify-center items-center h-screen">
+    <div className="loading loading-spinner loading-lg text-primary"></div>
+  </div>
+);
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactElement; allowedRoles?: string[] }) => {
@@ -40,17 +40,8 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactEleme
     return <Navigate to="/login" replace />;
   }
 
-  // If allowedRoles is defined, check if user's role is included
-  if (allowedRoles) {
-    if (!allowedRoles.includes(user.role)) {
-      console.log('Access Denied:', {
-        userRole: user.role,
-        allowedRoles,
-        hasMatch: allowedRoles.includes(user.role)
-      });
-      // If user is logged in but unauthorized for this specific route
-      return <Navigate to="/" replace />;
-    }
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -59,7 +50,8 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactEleme
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
 
@@ -139,7 +131,8 @@ function App() {
              </ProtectedRoute>
           } />
         </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

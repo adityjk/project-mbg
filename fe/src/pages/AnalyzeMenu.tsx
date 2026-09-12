@@ -29,7 +29,6 @@ export default function AnalyzeMenu() {
     setLocation('');
     setError(null);
     setSuccess(null);
-    setSuccess(null);
   }, []);
 
   // Fetch schools on mount
@@ -70,8 +69,8 @@ export default function AnalyzeMenu() {
     // Simulate "Processing" steps for better UX
     try {
       const response = await menuApi.analyze(selectedFile);
-      setResult(response.data.data as Omit<Menu, 'id' | 'created_at'>);
-      setImagePath(response.data.imagePath);
+      setResult(response.data as Omit<Menu, 'id' | 'created_at'>);
+      setImagePath(response.imagePath);
       // setSuccess('Analisis berhasil!'); // Don't show success toast here, let result speak
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }; message?: string };

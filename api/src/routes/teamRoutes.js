@@ -2,7 +2,7 @@ const express = require('express');
 const db = require('../config/db');
 const { requireAdmin } = require('../middleware/authMiddleware');
 const { upload } = require('../config/upload');
-const { validateCreateTeam, validateIdParam } = require('../middleware/validator');
+const { validateCreateTeam, validateUpdateTeam, validateIdParam } = require('../middleware/validator');
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ router.get('/tim-sppg', async (req, res) => {
     const [rows] = await db.execute("SELECT * FROM tim_sppg WHERE is_active = 1 ORDER BY urutan ASC, created_at DESC");
     res.json(rows);
   } catch (err) {
+    console.error('Get public team members error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -26,23 +27,15 @@ router.get('/admin/tim-sppg', requireAdmin, async (req, res) => {
     const [rows] = await db.execute("SELECT * FROM tim_sppg ORDER BY urutan ASC, created_at DESC");
     res.json(rows);
   } catch (err) {
+    console.error('Get admin team members error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 
 // Create team member
-const uploadMiddleware = (req, res, next) => {
-  const uploadSingle = upload.single('foto');
-  uploadSingle(req, res, (err) => {
-    if (err) {
-      console.error('[CRITICAL] Team Image Upload Error:', err.message);
-      return res.status(500).json({ error: "Gagal upload foto: " + err.message });
-    }
-    next();
-  });
-};
+const { uploadMiddleware } = require('../middleware/uploadMiddleware');
 
-router.post('/admin/tim-sppg', requireAdmin, uploadMiddleware, validateCreateTeam, async (req, res) => {
+router.post('/admin/tim-sppg', requireAdmin, uploadMiddleware(upload), validateCreateTeam, async (req, res) => {
   const { nama, jabatan, deskripsi, email, telepon, urutan, is_active } = req.body;
 
   const foto_url = req.file ? req.file.path : null;
@@ -58,12 +51,13 @@ router.post('/admin/tim-sppg', requireAdmin, uploadMiddleware, validateCreateTea
     ]);
     res.status(201).json({ message: "Anggota tim berhasil ditambahkan", id: result.insertId });
   } catch (err) {
+    console.error('Create team member error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 
 // Update team member
-router.put('/admin/tim-sppg/:id', requireAdmin, validateIdParam, uploadMiddleware, async (req, res) => {
+router.put('/admin/tim-sppg/:id', requireAdmin, validateIdParam, validateUpdateTeam, uploadMiddleware(upload), async (req, res) => {
   const { nama, jabatan, deskripsi, email, telepon, urutan, is_active } = req.body;
 
   const updates = [];
@@ -94,8 +88,24 @@ router.put('/admin/tim-sppg/:id', requireAdmin, validateIdParam, uploadMiddlewar
     if (result.affectedRows === 0) return res.status(404).json({ error: "Data tidak ditemukan" });
     res.json({ message: "Data anggota tim berhasil diperbarui" });
   } catch (err) {
+    console.error('Update team member error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
+});
+
+// Upload team member photo (used by frontend before create/update)
+router.post('/admin/tim-sppg/upload-image', requireAdmin, (req, res, next) => {
+  const uploadSingle = upload.single('image');
+  uploadSingle(req, res, (err) => {
+    if (err) {
+      console.error('[CRITICAL] Team Image Upload Error:', err.message);
+      return res.status(500).json({ error: "Gagal upload gambar: " + err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "Gambar tidak ditemukan" });
+    }
+    res.json({ message: "Upload berhasil", imageUrl: req.file.path });
+  });
 });
 
 // Delete team member
@@ -105,6 +115,7 @@ router.delete('/admin/tim-sppg/:id', requireAdmin, validateIdParam, async (req, 
     if (result.affectedRows === 0) return res.status(404).json({ error: "Data tidak ditemukan" });
     res.json({ message: "Anggota tim berhasil dihapus" });
   } catch (err) {
+    console.error('Delete team member error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });

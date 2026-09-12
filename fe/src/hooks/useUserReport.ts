@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { reportApi, menuApi } from '../services/api';
 import { compressImage, isValidImage, getImagePreviewUrl, revokeImagePreviewUrl } from '../utils/imageUtils';
-import type { Menu, Report } from '../types';
+import type { Menu } from '../types';
 
 export function useUserReport() {
   const [user, setUser] = useState<any>(null);
@@ -16,16 +16,46 @@ export function useUserReport() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    // Load user
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const fetchMenus = useCallback(async () => {
+    try {
+      const res = await menuApi.getAll();
+      if (mountedRef.current) setMenus(res.data);
+    } catch (err) {
+      console.error("Gagal load menu");
+    }
+  }, []);
+
+  const fetchMyReports = useCallback(async () => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) return;
+      const u = JSON.parse(storedUser);
+
+      const res = await reportApi.getAll();
+      const filtered = res.data.filter((r: any) => r.nama_pelapor === u.username);
+      if (mountedRef.current) {
+        setMyReports(filtered.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      }
+    } catch (err) {
+      console.error("Gagal load reports");
+    }
+  }, []);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     fetchMenus();
     fetchMyReports();
-  }, []);
+  }, [fetchMenus, fetchMyReports]);
 
   // Cleanup preview
   useEffect(() => {
@@ -34,30 +64,7 @@ export function useUserReport() {
     };
   }, [imagePreview]);
 
-  const fetchMenus = async () => {
-    try {
-      const res = await menuApi.getAll();
-      setMenus(res.data);
-    } catch (err) {
-      console.error("Gagal load menu");
-    }
-  };
-
-  const fetchMyReports = async () => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) return;
-      const u = JSON.parse(storedUser);
-      
-      const res = await reportApi.getAll();
-      const filtered = res.data.filter((r: any) => r.nama_pelapor === u.username);
-      setMyReports(filtered.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
-    } catch (err) {
-      console.error("Gagal load reports");
-    }
-  };
-
-  const handleImageSelect = (file: File) => {
+  const handleImageSelect = useCallback((file: File) => {
     if (!isValidImage(file)) {
       setError('Format gambar tidak valid. Gunakan JPG, PNG, atau WebP.');
       return false;
@@ -67,15 +74,15 @@ export function useUserReport() {
     setSelectedImage(file);
     setError(null);
     return true;
-  };
+  }, []);
 
-  const removeImage = () => {
+  const removeImage = useCallback(() => {
     if (imagePreview) revokeImagePreviewUrl(imagePreview);
     setSelectedImage(null);
     setImagePreview(null);
-  };
+  }, [imagePreview]);
 
-  const submitReport = async (formData: any) => {
+  const submitReport = useCallback(async (formData: any) => {
     setLoading(true);
     setError(null);
     try {
@@ -86,7 +93,7 @@ export function useUserReport() {
         try {
           const compressedImage = await compressImage(selectedImage);
           const uploadRes = await reportApi.uploadImage(compressedImage);
-          foto_bukti = uploadRes.data.imageUrl;
+          foto_bukti = uploadRes.imageUrl;
         } catch (uploadErr) {
           console.error('Image upload failed:', uploadErr);
           setError('Gagal upload gambar. Laporan akan dikirim tanpa gambar.');
@@ -113,12 +120,12 @@ export function useUserReport() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedImage, removeImage, fetchMyReports]);
 
-  const resetSuccess = () => {
+  const resetSuccess = useCallback(() => {
     setSuccess(false);
     setTicketId(null);
-  };
+  }, []);
 
   return {
     user,

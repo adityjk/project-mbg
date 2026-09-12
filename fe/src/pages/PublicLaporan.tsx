@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MdReport, MdSend, MdCheck, MdPerson, MdSchool, MdDescription, MdHome, MdCampaign, MdImage, MdClose } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 import { reportApi } from '../services/api';
-import { compressImage, isValidImage, getImagePreviewUrl, revokeImagePreviewUrl } from '../utils/imageUtils';
+import { compressImage, isValidImage, getImagePreviewUrl, revokeImagePreviewUrl, REPORT_CATEGORIES } from '../utils/imageUtils';
 import { motion } from 'framer-motion';
 
 export default function PublicLaporan() {
@@ -81,7 +81,7 @@ export default function PublicLaporan() {
           // Compress image before upload
           const compressedImage = await compressImage(selectedImage);
           const uploadRes = await reportApi.uploadImage(compressedImage);
-          foto_bukti = uploadRes.data.imageUrl;
+          foto_bukti = uploadRes.imageUrl;
         } catch (uploadErr) {
           console.error('Image upload failed:', uploadErr);
           // Continue without image if upload fails
@@ -234,11 +234,9 @@ export default function PublicLaporan() {
                      value={formData.kategori}
                      onChange={(e) => setFormData({ ...formData, kategori: e.target.value as any })}
                   >
-                     <option value="umum">Umum</option>
-                     <option value="kualitas_makanan">Kualitas Makanan</option>
-                     <option value="distribusi">Distribusi / Pengiriman</option>
-                     <option value="kebersihan">Kebersihan</option>
-                     <option value="lainnya">Lainnya</option>
+                     {REPORT_CATEGORIES.map(cat => (
+                       <option key={cat.value} value={cat.value}>{cat.label}</option>
+                     ))}
                   </select>
                   </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MdRestaurantMenu, MdLocalFireDepartment, MdFitnessCenter, MdCalendarToday, MdFilterList, MdSearch, MdSchool, MdDateRange } from 'react-icons/md';
 import { menuApi } from '../../services/api';
+import { resolveMediaUrl } from '../../utils/imageUtils';
 import type { Menu } from '../../types';
 
 // Animation Variants
@@ -185,7 +186,7 @@ export default function HistorySiswa() {
                    <div className="h-56 relative overflow-hidden bg-base-200">
                      {menu.foto_url ? (
                         <img 
-                          src={menu.foto_url.startsWith('http') ? menu.foto_url : `http://localhost:5000${menu.foto_url}`} 
+                          src={resolveMediaUrl(menu.foto_url) || undefined} 
                           alt={menu.nama_menu}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                         />

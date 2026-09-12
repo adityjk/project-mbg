@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MdCampaign, MdClose, MdSearch } from 'react-icons/md';
 import { useReports } from '../hooks/useReports';
 import type { Report } from '../types';
@@ -15,11 +15,16 @@ export default function Reports() {
   
   const { showConfirm, DialogComponent } = useConfirmDialog();
 
-  const filteredReports = reports.filter(report => {
-    if (activeTab === 'pending') return report.status === 'pending';
-    if (activeTab === 'history') return report.status !== 'pending';
-    return true;
-  });
+  const filteredReports = useMemo(() => {
+    if (activeTab === 'pending') return reports.filter(r => r.status === 'pending');
+    if (activeTab === 'history') return reports.filter(r => r.status !== 'pending');
+    return reports;
+  }, [reports, activeTab]);
+
+  const pendingCount = useMemo(
+    () => reports.filter(r => r.status === 'pending').length,
+    [reports]
+  );
 
   const handleDelete = (id: number) => {
     showConfirm({
@@ -28,7 +33,7 @@ export default function Reports() {
       confirmText: 'Ya, Hapus',
       cancelText: 'Batal',
       type: 'danger',
-      onConfirm: () => deleteReport(id),
+      onConfirm: async () => { await deleteReport(id); },
     });
   };
 
@@ -142,9 +147,9 @@ export default function Reports() {
           }`}
         >
           Laporan Masuk 
-          {reports.filter(r => r.status === 'pending').length > 0 && (
+          {pendingCount > 0 && (
             <span className="ml-2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full">
-              {reports.filter(r => r.status === 'pending').length}
+              {pendingCount}
             </span>
           )}
         </button>

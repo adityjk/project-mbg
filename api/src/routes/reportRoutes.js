@@ -54,6 +54,7 @@ router.get('/', async (req, res) => {
     }));
     res.json(resultsWithTicket);
   } catch (err) {
+    console.error('Get reports error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -71,23 +72,15 @@ router.post('/', validateCreateReport, async (req, res) => {
       id: result.insertId 
     });
   } catch (err) {
+    console.error('Create report error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
 
 // Upload report image (Public)
-const uploadReportMiddleware = (req, res, next) => {
-  const uploadSingle = uploadReport.single('image');
-  uploadSingle(req, res, (err) => {
-    if (err) {
-      console.error('[CRITICAL] Report Image Upload Error:', err.message);
-      return res.status(500).json({ error: "Gagal upload gambar: " + err.message });
-    }
-    next();
-  });
-};
+const { uploadMiddleware } = require('../middleware/uploadMiddleware');
 
-router.post('/upload-image', uploadReportMiddleware, (req, res) => {
+router.post('/upload-image', uploadMiddleware(uploadReport), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "Gambar tidak ditemukan" });
   }
@@ -126,6 +119,7 @@ router.patch('/:id', requireComplaintOfficer, validateIdParam, validateUpdateRep
     if (result.affectedRows === 0) return res.status(404).json({ error: "Laporan tidak ditemukan" });
     res.json({ message: "Laporan berhasil diperbarui" });
   } catch (err) {
+    console.error('Update report error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });
@@ -137,6 +131,7 @@ router.delete('/:id', requireComplaintOfficer, validateIdParam, async (req, res)
     if (result.affectedRows === 0) return res.status(404).json({ error: "Laporan tidak ditemukan" });
     res.json({ message: "Laporan berhasil dihapus" });
   } catch (err) {
+    console.error('Delete report error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });

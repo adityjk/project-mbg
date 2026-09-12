@@ -1,44 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MdHome, MdRestaurantMenu, MdCalendarMonth, MdLocalFireDepartment, MdEgg, MdExpandMore, MdExpandLess, MdSpa } from 'react-icons/md';
+import { MdHome, MdRestaurantMenu, MdCalendarMonth, MdLocalFireDepartment, MdEgg, MdSpa } from 'react-icons/md';
 import { menuApi } from '../services/api';
+import ExpandableDescription from '../components/ExpandableDescription';
 import type { Menu } from '../types';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';
-
-// Expandable Description Component
-const ExpandableDescription = ({ text, maxLength = 80 }: { text: string; maxLength?: number }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const shouldTruncate = text.length > maxLength;
-
-  if (!shouldTruncate) {
-    return <p className="text-sm text-gray-600 leading-relaxed">{text}</p>;
-  }
-
-  return (
-    <div>
-      <p className="text-sm text-gray-600 leading-relaxed">
-        {isExpanded ? text : `${text.slice(0, maxLength)}...`}
-      </p>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="mt-1 text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors"
-      >
-        {isExpanded ? (
-          <>
-            <MdExpandLess size={16} />
-            Tutup
-          </>
-        ) : (
-          <>
-            <MdExpandMore size={16} />
-            Baca Selengkapnya
-          </>
-        )}
-      </button>
-    </div>
-  );
-};
 
 export default function PublicMenuHistory() {
   const [menus, setMenus] = useState<Menu[]>([]);

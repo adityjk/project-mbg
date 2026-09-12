@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { MdRestaurantMenu, MdAdminPanelSettings, MdArrowForward, MdSchool, MdLocalDining, MdDashboard, MdLogout, MdCampaign, MdPeople, MdHistory, MdCheckCircle } from 'react-icons/md';
+import { MdAdminPanelSettings, MdArrowForward, MdSchool, MdLocalDining, MdDashboard, MdLogout, MdCampaign, MdPeople, MdHistory } from 'react-icons/md';
 import ThemeToggle from '../components/ThemeToggle';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';

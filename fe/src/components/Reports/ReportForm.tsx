@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Report } from '../../types';
+import { REPORT_CATEGORIES } from '../../utils/imageUtils';
 
 interface ReportFormProps {
   onSubmit: (data: any) => Promise<boolean>;
@@ -25,7 +25,7 @@ export default function ReportForm({ onSubmit, onCancel, submitting = false }: R
     setError(null);
     const success = await onSubmit(formData);
     if (success) {
-      setFormData({ nama_pelapor: '', asal_sekolah: '', isi_laporan: '' });
+      setFormData({ nama_pelapor: '', asal_sekolah: '', isi_laporan: '', kategori: 'umum' });
     }
   };
 
@@ -67,11 +67,9 @@ export default function ReportForm({ onSubmit, onCancel, submitting = false }: R
                onChange={(e) => setFormData({ ...formData, kategori: e.target.value })}
                disabled={submitting}
              >
-               <option value="umum">Umum</option>
-               <option value="kualitas_makanan">Kualitas Makanan</option>
-               <option value="distribusi">Distribusi / Porsi</option>
-               <option value="kebersihan">Kebersihan</option>
-               <option value="lainnya">Lainnya</option>
+               {REPORT_CATEGORIES.map(cat => (
+                 <option key={cat.value} value={cat.value}>{cat.label}</option>
+               ))}
              </select>
            </div>
            <div className="form-control">

@@ -10,17 +10,20 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Cloudinary Storage for Multer (Menu Images)
+// Shared image transformations
+const sharedTransformation = [
+  { width: 1200, height: 1200, crop: 'limit' },
+  { quality: 'auto:good' },
+  { fetch_format: 'auto' }
+];
+
+// Cloudinary Storage for Menu Images
 const menuStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'mbg_menu_images',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-    transformation: [
-      { width: 1200, height: 1200, crop: 'limit' },
-      { quality: 'auto:good' },
-      { fetch_format: 'auto' }
-    ],
+    transformation: sharedTransformation,
   },
 });
 
@@ -30,11 +33,7 @@ const reportStorage = new CloudinaryStorage({
   params: {
     folder: 'mbg_report_images',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-    transformation: [
-      { width: 1200, height: 1200, crop: 'limit' },
-      { quality: 'auto:good' },
-      { fetch_format: 'auto' }
-    ],
+    transformation: sharedTransformation,
   },
 });
 
@@ -52,9 +51,12 @@ const profileStorage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage: menuStorage });
-const uploadReport = multer({ storage: reportStorage });
-const uploadProfile = multer({ storage: profileStorage });
+// Shared file limit (10MB)
+const fileSizeLimit = 10 * 1024 * 1024;
+
+const upload = multer({ storage: menuStorage, limits: { fileSize: fileSizeLimit } });
+const uploadReport = multer({ storage: reportStorage, limits: { fileSize: fileSizeLimit } });
+const uploadProfile = multer({ storage: profileStorage, limits: { fileSize: fileSizeLimit } });
 
 module.exports = {
   upload,
