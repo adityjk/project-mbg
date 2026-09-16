@@ -148,7 +148,7 @@ GitHub → `adityjk/project-mbg` → **Settings → Danger Zone → Change repos
 
 | Problem | Fix |
 |---|---|
-| `Database connected` never logged / 500s on all routes | Check `DATABASE_URL` spelling, `DB_SSL=true`, and that you imported `db_schema_pg.sql` in the Neon SQL Editor. |
+| `Database connected` never logged / 500s on all routes | Check `DATABASE_URL` spelling, `DB_SSL=true`, and that you imported `db_schema_pg.sql` in the Neon SQL Editor. `DB_HOST`/`DB_NAME` are **not** required when `DATABASE_URL` is set (since the env-check fix). |
 | `cloud_name is disabled` on image upload | Cloudinary account issue (unverified email or disabled env) — see Cloudinary Console → Settings → Product environments, or email-verify. |
 | Gemini `503` on analyze | Transient — the API now retries up to 5× with backoff. If frequent, switch model in `api/src/config/gemini.js` to `gemini-2.5-flash-lite`. |
 | CORS `Not allowed by CORS` | Missing origin in `ALLOWED_ORIGINS`; add the exact frontend URL and redeploy. |

@@ -161,6 +161,15 @@ User decision: keep `api/` + `fe/` as-is, add a **root orchestrator workspace** 
 
 ---
 
+## Session 9 — Deploy fixes (DATABASE_URL boot, CORS wiring)
+
+- **Bug:** `api/src/server.js` validated `DB_HOST`/`DB_NAME` as hard-required env vars, so a Neon-only setup (`DATABASE_URL` set, no `DB_HOST`) **crashed the serverless function** (`❌ FATAL: Missing required env var: DB_HOST` → exit 1). Every request — including OPTIONS preflight — returned 500, which is the real root cause of the CORS error (no `Access-Control-Allow-Origin` header on a 500).
+- **Fix:** `server.js` now requires `JWT_SECRET` always, but for the DB accepts **either** `DATABASE_URL`/`DB_URL` **or** `DB_HOST`+`DB_NAME` (with a clear hint message when both are missing). Verified all three cases pass.
+- CORS itself is governed by `ALLOWED_ORIGINS` on the API project — set `https://project-mbg-fe.vercel.app,http://localhost:5173,...` and redeploy.
+- `api/.env.example` updated (DATABASE_URL is now the documented primary); `push.md` troubleshooting note updated.
+
+---
+
 ## Current state / pending
 
 ### Done — Demo mode toggle (Session 4, per user decision)

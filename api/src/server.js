@@ -5,13 +5,23 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 // ========== Validate Required Env Vars ==========
-const requiredEnv = ['JWT_SECRET', 'DB_HOST', 'DB_NAME'];
+// DB can be configured EITHER via DATABASE_URL (recommended, e.g. Neon/Supabase)
+// OR via the individual DB_* parts (DB_HOST + DB_NAME minimum).
+const requiredEnv = ['JWT_SECRET'];
 const recommendedEnv = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'GEMINI_API_KEY'];
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    console.error(`❌ FATAL: Missing required env var: ${key}`);
-    process.exit(1);
-  }
+
+const hasDbUrl = !!(process.env.DATABASE_URL || process.env.DB_URL);
+const missingDbParts = !hasDbUrl
+  ? ['DB_HOST', 'DB_NAME'].filter((key) => !process.env[key])
+  : [];
+const missing = requiredEnv
+  .filter((key) => !process.env[key])
+  .concat(missingDbParts);
+
+if (missing.length) {
+  console.error(`❌ FATAL: Missing required env var(s): ${missing.join(', ')}`);
+  console.error('   Set DATABASE_URL (recommended, e.g. from Neon) OR DB_HOST + DB_NAME.');
+  process.exit(1);
 }
 for (const key of recommendedEnv) {
   if (!process.env[key]) {
