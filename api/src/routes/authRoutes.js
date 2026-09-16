@@ -19,7 +19,7 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
     const [result] = await db.execute(sql, [username, hashedPassword, school_name]);
     res.status(201).json({ message: "Registrasi berhasil, silakan login" });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: "Username sudah terdaftar" });
+    if (err.code === '23505') return res.status(400).json({ error: "Username sudah terdaftar" });
     console.error('Register error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }

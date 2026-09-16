@@ -1,22 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MdSchool, MdAdd, MdEdit, MdDelete, MdPlace, MdLocalShipping, MdMap, MdClose } from 'react-icons/md';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { schoolApi } from '../../services/api';
 import type { School } from '../../types';
-
-// Fix Leaflet icons
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+import { DEFAULT_MARKER_ICON } from '../../utils/leafletIcons';
 
 function LocationPicker({ position, setPosition }: { position: [number, number] | null, setPosition: (pos: [number, number]) => void }) {
   useMapEvents({
@@ -26,7 +14,7 @@ function LocationPicker({ position, setPosition }: { position: [number, number] 
   });
 
   return position ? (
-    <Marker position={position} icon={DefaultIcon} />
+    <Marker position={position} icon={DEFAULT_MARKER_ICON} />
   ) : null;
 }
 
@@ -46,11 +34,7 @@ export default function SchoolManagement() {
     longitude: 109.6125
   });
 
-  useEffect(() => {
-    fetchSchools();
-  }, []);
-
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     try {
       const response = await schoolApi.getAll();
       setSchools(response.data);
@@ -59,7 +43,11 @@ export default function SchoolManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSchools();
+  }, [fetchSchools]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +70,7 @@ export default function SchoolManagement() {
     if (!confirm('Hapus data ini?')) return;
     try {
       await schoolApi.delete(id);
-      setSchools(schools.filter(s => s.id !== id));
+      setSchools(prev => prev.filter(s => s.id !== id));
     } catch (error) {
        console.error('Failed to delete school:', error);
        alert('Gagal menghapus data');

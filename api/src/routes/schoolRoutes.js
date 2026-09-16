@@ -25,6 +25,7 @@ router.post('/', requireAdmin, validateCreateSchool, async (req, res) => {
     const [result] = await db.execute(sql, [nama_sekolah, alamat, latitude, longitude, jumlah_siswa || 0, tipe || 'sekolah']);
     res.status(201).json({ message: "Data sekolah berhasil disimpan", id: result.insertId });
   } catch (err) {
+    console.error('Create school error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
 });

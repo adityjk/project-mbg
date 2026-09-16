@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MdHome, MdPeople, MdEmail, MdPhone } from 'react-icons/md';
 import Footer from '../components/Footer';
@@ -11,11 +11,7 @@ export default function TimSPPGPublic() {
   const [teamMembers, setTeamMembers] = useState<TimSPPG[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTeam();
-  }, []);
-
-  const fetchTeam = async () => {
+  const fetchTeam = useCallback(async () => {
     try {
       const response = await timSppgApi.getAll();
       setTeamMembers(response.data);
@@ -24,7 +20,11 @@ export default function TimSPPGPublic() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTeam();
+  }, [fetchTeam]);
 
   const containerVariant = {
     hidden: { opacity: 0 },

@@ -15,12 +15,12 @@ router.get('/', async (req, res) => {
   const conditions = [];
 
   if (date) {
-    conditions.push("DATE(created_at) = ?");
+    conditions.push("created_at::date = ?");
     params.push(date);
   }
 
   if (month) {
-    conditions.push("DATE_FORMAT(created_at, '%Y-%m') = ?");
+    conditions.push("TO_CHAR(created_at, 'YYYY-MM') = ?");
     params.push(month);
   }
 

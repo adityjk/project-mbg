@@ -22,7 +22,7 @@ A comprehensive web application for managing and analyzing "Makan Bergizi Gratis
 ### Backend (`/api`)
 - **Runtime**: Node.js
 - **Framework**: Express.js
-- **Database**: MySQL
+- **Database**: PostgreSQL
 - **AI Integration**: Google Generative AI SDK (@google/generative-ai)
 - **File Handling**: Multer
 
@@ -34,46 +34,60 @@ A comprehensive web application for managing and analyzing "Makan Bergizi Gratis
 
 ## 🔧 Installation & Setup
 
-### 1. Database Setup
-Ensure you have a MySQL database running. Import the provided SQL schema (if available) or ensure the following tables exist:
-- `menus` (for storing menu history and analysis results)
-- `reports` (for user feedback)
+> This repo is a **bun workspace monorepo** — one command runs everything from the root.
 
-### 2. Backend Setup (`api`)
+### 0. Install (once, from repo root)
 
 ```bash
-cd api
 bun install
 ```
 
-Create a `.env` file in the `api` directory:
+### 1. Database Setup
+
+The project uses **PostgreSQL**. For local dev, spin up the container:
+
+```bash
+docker compose up -d db
+bun run db:setup      # creates all tables (users, schools, menus, reports, tim_sppg)
+bun run db:admin      # optional: create the default 'admin SPPG' account
+```
+
+### 2. Backend Setup (`/api`)
+
+Create a `.env` file in the `api` directory (see `api/.env.example`):
 ```env
-PORT=3000
 DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=mbg_db
+DB_USER=mbg
+DB_PASSWORD=mbg_password
+DB_NAME=db_mbg
+DB_PORT=5432
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 GEMINI_API_KEY=your_google_gemini_api_key
 ```
 
-Run the server:
-```bash
-bun run dev
-```
-The backend will start at `http://localhost:3000`.
-
-### 3. Frontend Setup (`fe`)
+### 3. Run Everything (from repo root)
 
 ```bash
-cd fe
-bun install
+bun run dev        # starts API (port 5000) and frontend (port 5173) together
 ```
 
-Run the development server:
+Or individually:
 ```bash
-bun run dev
+cd api && bun run dev     # backend  → http://localhost:5000
+cd fe && bun run dev      # frontend → http://localhost:5173
 ```
-The frontend will start at `http://localhost:5173`.
+
+Useful root scripts:
+- `bun run build` — production build of the frontend
+- `bun run lint` — lint the frontend
+- `bun run db:setup` / `bun run db:admin` — database helpers
+
+## 🚀 Deployment
+
+See **`push.md`** for the full Vercel + Neon (Postgres) step-by-step guide.
+The two Vercel projects use root directories `api/` and `fe/` (workspace-aware).
 
 ## 🤖 AI Configuration
 This project uses the **Google Gemini 1.5 Flash** (via `gemini-2.5-flash` alias/model) for image analysis. Ensure your `GEMINI_API_KEY` is valid and has access to the Generative Language API.

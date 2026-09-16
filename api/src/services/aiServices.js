@@ -1,5 +1,44 @@
 const { model, fileToGenerativePart } = require("../config/gemini");
 
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 1000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isTransientError = (err) => {
+  const status = Number(err?.status || err?.response?.status || 0);
+  return [429, 500, 502, 503, 504].includes(status);
+};
+
+const generateContentWithRetry = async (prompt, imagePart) => {
+  let lastError;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await model.generateContent([prompt, imagePart]);
+    } catch (err) {
+      lastError = err;
+      const status = err?.status || err?.response?.status;
+      console.error(
+        `[AI] generateContent attempt ${attempt + 1}/${MAX_RETRIES + 1} failed (status: ${status}, message: ${err.message})`
+      );
+
+      if (!isTransientError(err)) {
+        throw err;
+      }
+
+      if (attempt < MAX_RETRIES) {
+        const jitter = Math.floor(Math.random() * 300);
+        const delay = Math.min(BASE_DELAY_MS * 2 ** attempt, 15000) + jitter;
+        console.warn(`[AI] Retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 const analyzeImageGizi = async (filePath, mimeType) => {
   const prompt = `Bertindaklah sebagai Ahli Gizi untuk program makan siang sekolah (Makan Bergizi Gratis).
   Tugasmu adalah menganalisis foto yang diberikan, apakah itu berupa "Dokumen Menu" (teks/tabel) atau "Foto Makanan Asli" (piring/mangkok).
@@ -41,7 +80,7 @@ const analyzeImageGizi = async (filePath, mimeType) => {
         throw new Error("Gagal mengkonversi gambar (data kosong)");
     }
 
-    const result = await model.generateContent([prompt, imagePart]);
+    const result = await generateContentWithRetry(prompt, imagePart);
     console.log('[DEBUG] Content generated');
     const response = await result.response;
     const text = response.text();

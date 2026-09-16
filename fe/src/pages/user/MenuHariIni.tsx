@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MdRestaurantMenu, MdLocalFireDepartment, MdFitnessCenter, MdCalendarToday, MdArrowForward, MdTipsAndUpdates, MdGrain } from 'react-icons/md';
 import { menuApi } from '../../services/api';
@@ -24,11 +24,7 @@ export default function MenuHariIni() {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTodayMenus();
-  }, []);
-
-  const fetchTodayMenus = async () => {
+  const fetchTodayMenus = useCallback(async () => {
     try {
       const response = await menuApi.getAll();
       // Filter menus from today (or show all for demo)
@@ -43,7 +39,11 @@ export default function MenuHariIni() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTodayMenus();
+  }, [fetchTodayMenus]);
 
   const formatDate = () => {
     return new Date().toLocaleDateString('id-ID', {

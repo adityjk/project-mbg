@@ -28,7 +28,7 @@ router.post('/', requireAdmin, validateCreateUser, async (req, res) => {
     const [result] = await db.execute(sql, [username, hashedPassword, school_name, role]);
     res.status(201).json({ message: "User berhasil dibuat", id: result.insertId });
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: "Username sudah terdaftar" });
+    if (err.code === '23505') return res.status(400).json({ error: "Username sudah terdaftar" });
     console.error('Create user error:', err);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }

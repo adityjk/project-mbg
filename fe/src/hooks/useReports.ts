@@ -43,18 +43,13 @@ export function useReports() {
     }
   }, [showError]);
 
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
-
-  // Debounced search - re-fetch when search query changes
+  // Debounced search — also performs the initial load when the query is empty
   useEffect(() => {
     if (searchQuery === '') {
-      // When search is cleared, refetch all reports
       fetchReports();
       return;
     }
-    
+
     const timeoutId = setTimeout(() => {
       fetchReports(searchQuery);
     }, 800);

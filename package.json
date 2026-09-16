@@ -1,0 +1,22 @@
+{
+  "name": "mbg",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "api",
+    "fe"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,fe -c blue,magenta \"bun run dev:api\" \"bun run dev:fe\"",
+    "dev:api": "cd api && bun run dev",
+    "dev:fe": "cd fe && bun run dev",
+    "build": "bun run build:fe",
+    "build:fe": "cd fe && bun run build",
+    "db:setup": "cd api && bun src/config/setup_db.js",
+    "db:admin": "cd api && bun create_admin.js",
+    "lint": "cd fe && bun run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

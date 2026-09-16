@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MdHome, MdRestaurantMenu, MdCalendarMonth, MdLocalFireDepartment, MdEgg, MdSpa } from 'react-icons/md';
 import { menuApi } from '../services/api';
@@ -15,11 +15,7 @@ export default function PublicMenuHistory() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  useEffect(() => {
-    fetchMenus();
-  }, [selectedMonth]);
-
-  const fetchMenus = async () => {
+  const fetchMenus = useCallback(async () => {
     setLoading(true);
     try {
       const res = await menuApi.getAll({ month: selectedMonth });
@@ -29,7 +25,11 @@ export default function PublicMenuHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    fetchMenus();
+  }, [fetchMenus]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('id-ID', {

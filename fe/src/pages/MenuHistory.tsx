@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MdHistory, MdDelete, MdRestaurantMenu, MdCalendarToday, MdCheck, MdClose, MdEdit, MdSave, MdSpa } from 'react-icons/md';
 import { menuApi } from '../services/api';
 import type { Menu } from '../types';
@@ -27,11 +27,7 @@ export default function MenuHistory() {
   });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchMenus();
-  }, []);
-
-  const fetchMenus = async () => {
+  const fetchMenus = useCallback(async () => {
     try {
       const response = await menuApi.getAll();
       setMenus(response.data);
@@ -40,7 +36,11 @@ export default function MenuHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchMenus();
+  }, [fetchMenus]);
 
   const handleEdit = (menu: Menu) => {
     setEditingMenu(menu);

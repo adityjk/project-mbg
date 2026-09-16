@@ -6,12 +6,15 @@ const { validateCreateTeam, validateUpdateTeam, validateIdParam } = require('../
 
 const router = express.Router();
 
+// Coerce is_active input (boolean | 1/0 | 'true'/'1') to a PG boolean
+const toBool = (v) => v === true || v === 1 || v === '1' || String(v).toLowerCase() === 'true';
+
 // ========== PUBLIC ROUTES ==========
 
 // Get all active team members (public)
 router.get('/tim-sppg', async (req, res) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM tim_sppg WHERE is_active = 1 ORDER BY urutan ASC, created_at DESC");
+    const [rows] = await db.execute("SELECT * FROM tim_sppg WHERE is_active = TRUE ORDER BY urutan ASC, created_at DESC");
     res.json(rows);
   } catch (err) {
     console.error('Get public team members error:', err);
@@ -47,7 +50,7 @@ router.post('/admin/tim-sppg', requireAdmin, uploadMiddleware(upload), validateC
     const [result] = await db.execute(sql, [
       nama, jabatan, deskripsi || null, foto_url, 
       email || null, telepon || null, urutan || 0, 
-      is_active !== undefined ? is_active : 1
+      is_active !== undefined ? toBool(is_active) : true
     ]);
     res.status(201).json({ message: "Anggota tim berhasil ditambahkan", id: result.insertId });
   } catch (err) {
@@ -69,7 +72,7 @@ router.put('/admin/tim-sppg/:id', requireAdmin, validateIdParam, validateUpdateT
   if (email !== undefined) { updates.push('email = ?'); params.push(email); }
   if (telepon !== undefined) { updates.push('telepon = ?'); params.push(telepon); }
   if (urutan !== undefined) { updates.push('urutan = ?'); params.push(urutan); }
-  if (is_active !== undefined) { updates.push('is_active = ?'); params.push(is_active); }
+  if (is_active !== undefined) { updates.push('is_active = ?'); params.push(toBool(is_active)); }
   
   if (req.file) {
     updates.push('foto_url = ?');

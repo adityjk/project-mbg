@@ -1,21 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { MdArrowBack } from 'react-icons/md';
 import { schoolApi } from '../services/api';
-
-// Fix for default marker icon not showing
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+import '../utils/leafletIcons';
 
 const Maps = () => {
   const navigate = useNavigate();
@@ -31,18 +20,18 @@ const Maps = () => {
     }
   };
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     try {
       const response = await schoolApi.getAll();
       setLocations(response.data);
     } catch (error) {
       console.error('Failed to fetch map locations:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-neutral font-sans">

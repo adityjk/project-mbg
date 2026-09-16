@@ -38,7 +38,7 @@ const Login = () => {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      if (['admin', 'petugas gizi', 'petugas pengaduan'].includes(user.role)) {
+      if (['admin', 'super_admin', 'petugas gizi', 'petugas pengaduan'].includes(user.role)) {
         navigate('/admin');
       } else {
         navigate('/user');

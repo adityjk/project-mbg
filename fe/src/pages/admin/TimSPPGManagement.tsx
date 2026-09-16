@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MdPeople, MdAdd, MdEdit, MdDelete, MdClose, MdEmail, MdPhone, MdCheck, MdVisibilityOff, MdCloudUpload, MdPhotoCamera } from 'react-icons/md';
 import { timSppgApi } from '../../services/api';
 import { getAvatarUrl } from '../../utils/imageUtils';
@@ -24,11 +24,7 @@ export default function TimSPPGManagement() {
     is_active: true
   });
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       const response = await timSppgApi.getAllAdmin();
       setMembers(response.data);
@@ -37,7 +33,11 @@ export default function TimSPPGManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

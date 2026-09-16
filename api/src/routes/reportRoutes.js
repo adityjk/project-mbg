@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
       r.nama_pelapor LIKE ? OR 
       r.asal_sekolah LIKE ? OR 
       r.isi_laporan LIKE ? OR
-      CONCAT('MBG-', LPAD(r.id, 6, '0')) LIKE ?
+      CONCAT('MBG-', LPAD(r.id::text, 6, '0')) LIKE ?
     )`;
     params.push(searchTerm, searchTerm, searchTerm, searchTerm);
   }

@@ -1,7 +1,7 @@
 # MBG Project — Progress Notes
 
 Repo: `/home/Ashvan/project/project-mbg`
-Monorepo: `api/` (Express 5 + MySQL) + `fe/` (React 19 + Vite 7 + TypeScript)
+Monorepo: bun workspace — `api/` (Express 5 + **PostgreSQL**) + `fe/` (React 19 + Vite 7 + TypeScript)
 
 ---
 
@@ -16,13 +16,13 @@ Checked = done. Priority: `[P0]` urgent, `[P1]` this week, `[P2]` nice-to-have.
 - [x] `[P0]` **FE** — `Sidebar.tsx`: full admin nav (incl `/admin/analyze`) shown in demo mode and for `super_admin`
 - [x] `[P1]` **FE** — persistent `DemoBanner` (floating badge) rendered once in `App.tsx` so it shows on every page
 - [x] `[P1]` **FE** — Login page: "Masuk sebagai Demo (Akses Penuh)" CTA in demo mode
-- [ ] `[P1]` **Test** — walk all admin pages + menu analysis + report flow in demo mode against real DB (blocked locally: no MySQL/MariaDB on this machine; do on Vercel or with DB running) — auth wiring verified via standalone middleware tests (7/7 pass)
+- [ ] `[P1]` **Test** — walk all admin pages + menu analysis + report flow in demo mode against real DB (now possible locally: Docker **Postgres** on :5432 + `DEMO_MODE=true`) — auth wiring verified via standalone middleware tests (7/7 pass)
 
 ### Known issues / cleanup
-- [ ] `[P1]` `schoolRoutes.js` create route — add `console.error` logging (only route missing it)
-- [ ] `[P2]` `db.js` `process.exit(1)` on DB connect fail at module load — risky on Vercel serverless cold starts; refactor to lazy connect
-- [ ] `[P2]` `super_admin` login dead-end in `authRoutes.js` (login ignores that role) — only matters if demo mode is removed
-- [ ] `[P2]` Root has no `package.json` (only had a stray `package-lock.json`, now deleted) — decide whether to add a root workspace or leave as-is
+- [x] `[P1]` `schoolRoutes.js` create route — added missing `console.error` logging
+- [x] `[P2]` `db.js` `process.exit(1)` on DB connect fail — replaced with warning log (serverless-safe; queries surface errors individually)
+- [x] `[P2]` `super_admin` login dead-end — fixed: Login redirect now sends `super_admin` to `/admin`
+- [x] `[P2]` Root `package.json` + bun workspaces added (Session 8) — `bun run dev` runs both apps
 
 ### Later (unscheduled ideas)
 - [ ] `[P2]` Extract shared `useImageUpload` hook from `useUserReport.ts` + `PublicLaporan.tsx` (still duplicated)
@@ -102,6 +102,65 @@ Previously the build was broken; all fixed:
 
 ---
 
+## Session 6 — Local DB (Docker MySQL) + Gemini 503 fix + deploy guide
+
+### Local database — MySQL via Docker
+- **Created `docker-compose.yml`** at repo root: `mysql:8.4` container `mbg-db` (:3306), db `db_mbg`, user `mbg`/`mbg_password` (dev creds only), healthcheck, persistent volume `mbg_db_data`.
+- Imported existing schema (users, schools, menus, reports, tim_sppg); `api/.env` wired: `DB_HOST=localhost`, `DB_USER=mbg`, `DB_PASSWORD=mbg_password`, `DB_NAME=db_mbg`.
+- `.env`/`.env.example` document the docker creds; `README.md` gained a Docker quick-start.
+
+### Gemini 503 fix
+- `src/services/aiServices.js`: **intermittent 503 from Google Generative Language API** (SSE-only error). Added `generateContentWithRetry` — MAX_RETRIES=5, exponential backoff from ~1.25s with jitter (1s → ~15s), retries HTTP 429/500/502/503/504 + error text `"503"`. Sets `expect: "application/json"` header.
+
+### Deploy guide
+- **Created `push.md`** — step-by-step Vercel publication guide (two projects from one repo, Root Directory `api/` and `fe/`, env vars, region/limits notes).
+
+---
+
+## Session 7 — Migrate MySQL → PostgreSQL (done on user request, so DB is easy to host online, e.g. Neon/Supabase)
+
+### Backend
+| File | Change |
+|---|---|
+| `src/config/db.js` | Rewritten for **`pg`** (`Pool`). Kept mysql2-compatible `execute()` shim so routes barely changed: `?` auto-mapped to `$1…$n` (incl. `?` inside literals), INSERT automatically appends `RETURNING *` and exposes `insertId`, `affectedRows`, `rows`; SELECT returns `.rows`. Supports **`DATABASE_URL`** (wins over DB_*), `DB_SSL` config, SSL-only pooling. No credential-conflict warnings. |
+| `src/config/setup_db.js` | Rewritten: connects via `Pool`, executes migrator SQL from **`db_schema_pg.sql`**, strips `--` comment lines, splits on `;`, creates tables with `CREATE TABLE IF NOT EXISTS`, logs `✅ All tables ready`. |
+| `db_schema_pg.sql` (root) | Rewritten for Postgres — all 5 tables: `users` (SERIAL PK, role CHECK, UNIQUE username), `schools`, `menus` (SERIAL, FK→schools), `reports` (SERIAL, FKs), `tim_sppg` (SERIAL, BOOLEAN `is_active` default TRUE). Backups of old MySQL schema kept as `db_schema_mysql.sql` / `db_schema.sql` (delete when ready). |
+| `src/routes/menuRoutes.js` | `GROUP BY TO_CHAR(created_at,'YYYY-MM')`; `created_at::date` for date comparisons. |
+| `src/routes/reportRoutes.js` | Ticket search: `LPAD(r.id::text,6,'0')` (replaces `LPAD(CAST(id AS CHAR),…)`). |
+| `src/routes/teamRoutes.js` | `is_active = TRUE` filter + local `toBool` helper (replaces MySQL `1`). |
+| `src/routes/authRoutes.js`, `userRoutes.js` | Duplicate-key error code `'ER_DUP_ENTRY'` → `'23505'`. |
+| `src/routes/dashboardRoutes.js` | **Bug fixed by PG strictness:** quoted aliases `"totalMenus"`, `"totalReports"`, `"avgKalori"`, `"avgProtein"`, `"totalPorsi"` — MySQL unquoted aliases returned lowercase so stats showed zeros in the FE; PG 4316s on mixed-case in Node `pg` (`column "totalmenus" does not exist`). |
+| `api/create_admin.js`, `verify_access.js` | Converted to `pg`; `dotenv` path fixed (`process.cwd()` fallback); `verify_access.js` role test now **PASS**. |
+| `api/package.json` | Added `pg` (^8.13.1). |
+
+### Infra / config
+- `docker-compose.yml` → switched to **`postgres:16`** (still port 5432, same `mbg`/`mbg_password`/`db_mbg`); old MySQL container+volume removed (`docker compose down -v`). `db_schema_pg.sql` mounted for init.
+- `api/.env` / `.env.example` → `DB_PORT=5432`, `DB_SSL=false`; `DATABASE_URL` line documented (Neon) as the online override.
+- `README.md` → tech stack MySQL → PostgreSQL; Docker + setup instructions.
+- `push.md` → rewritten: Neon (free serverless Postgres) walkthrough, `DATABASE_URL` env-inject flow, remove-Heroku note.
+
+### Verification (local, against Docker Postgres)
+- Register/login + token, menu insert returns real id, month filter, report insert + ticket search (`MBG-000001`), stats endpoint (nonzero aliases), tim-sppg boolean insert, school update/delete, duplicate username → 400 → all **passed**. Test data cleaned (0 users).
+
+---
+
+## Session 8 — Monorepo (bun workspace, light orchestrator)
+
+User decision: keep `api/` + `fe/` as-is, add a **root orchestrator workspace** (no folder moves; Vercel root dirs unchanged — separate API + FE links, connected via `VITE_API_URL` + `ALLOWED_ORIGINS`).
+
+- **Created root `package.json`** — `"workspaces": ["api","fe"]` + scripts:
+  - `dev` → `concurrently -n api,fe` (both dev servers, API :5000 + Vite :5173)
+  - `dev:api`, `dev:fe`, `build` (→ `build:fe`), `build:fe`, `lint`
+  - `db:setup` (`bun src/config/setup_db.js`), `db:admin` (`bun create_admin.js`)
+- **Root `bun.lock`** generated; `bun install` at root hoisted all deps (750 packages, incl. `concurrently`).
+- **Bun gotchas worked around:** bare `bun --cwd <dir> run <script>` prints help (script treated as file), and file-scripts need `bun <file>` not `bun run <file>` → root scripts use `cd <dir> && bun …` instead.
+- `README.md` → rewritten setup for workspace: `bun install`, `bun run dev`, `bun run build`, `bun run db:setup`. `push.md` → monorepo/workspace note at top.
+
+### Verification
+- `bun install` (root) ✅ · `bun run dev` → API on :5000 (Postgres-connected) + FE on :5173 ✅ · `bun run build` (tsc + vite) ✅  · `bun run db:setup` ✅ (5 tables) · `bun run db:admin` ✅ (admin SPPG created)
+
+---
+
 ## Current state / pending
 
 ### Done — Demo mode toggle (Session 4, per user decision)
@@ -111,25 +170,60 @@ Backend + frontend implemented (see checklist above). Local `.env` files enabled
 
 Auth wiring verified with a standalone middleware test (7/7 pass): demo injects super_admin on missing/invalid token, `requireRole` gates pass, valid real tokens still honored, and non-demo behaviour unchanged (403/401/blocked).
 
+### Done — PostgreSQL migration (Session 7)
+Local DB is now **Postgres 16 via Docker** (`docker compose up -d db`, port 5432). MySQL files/volume removed. All routes + setup/admin scripts converted and verified (see Session 7).
+
+### Done — Monorepo workspace (Session 8)
+Root `package.json` + `bun.lock` (bun workspaces, light orchestrator). One command: `bun install` → `bun run dev`.
+
 ### Remaining for demo mode
-- Full UI walkthrough against real DB — blocked locally (no MySQL/MariaDB installed, port 3306 closed). Do on Vercel deployment or once a DB is available.
+- Full UI walkthrough against real DB — now doable locally: Docker Postgres on :5432 + `DEMO_MODE=true`, or on the Vercel deploy.
 
 ### Open issues / not yet done
-- `super_admin` login dead-end (role not handled in `authRoutes.js` login flow) — only relevant if demo mode removed; demo mode bypasses this.
-- `schoolRoutes.js` create route lacks `console.error` logging.
-- `api/src/config/db.js` calls `process.exit(1)` on DB connect fail at module load — risky on Vercel serverless cold start (not reached demo mode).
-- Root `package-lock.json` deleted — root has no `package.json`.
 - Public `LocalStorage`-based auth is fragile but intentional for the showcase.
+- Remaining FE lint backlog (not yet addressed): `react-hooks/set-state-in-effect` (fetch-in-effect in useReports/useUserReport/UserManagement/HistorySiswa/UserReportForm), `@typescript-eslint/no-explicit-any` (~20), a few unused `err` catch bindings, `react-refresh/only-export-components` in `ConfirmDialog.tsx`, `prefer-const`/`exhaustive-deps` stragglers.
+- Old MySQL schemas left at root as `db_schema_mysql.sql` / `db_schema.sql` — safe to delete.
+
+---
+
+## Session 5 — Bug fixes + hooks hardening
+
+### Backend
+| File | Change |
+|---|---|
+| `src/config/db.js` | Removed `process.exit(1)` on DB connect fail (was a Vercel serverless cold-start crash-loop). Now logs a warning and keeps running; queries surface errors individually. |
+| `src/routes/schoolRoutes.js` | Added the last missing `console.error` (create route). |
+
+### Frontend
+| File | Change |
+|---|---|
+| `src/pages/auth/Login.tsx` | **Bug:** `super_admin` logged in wound up on `/user` (dead-end). Admin-redirect list now includes `super_admin`. |
+| `src/utils/leafletIcons.ts` (new) | Shared Leaflet default marker icon factory + prototype side-effect; replaces duplicated code in `Maps.tsx` + `SchoolManagement.tsx` (also fixes 2× `let DefaultIcon` → `const`). |
+| `src/pages/Maps.tsx` | Uses shared icon util (side-effect import); `fetchLocations` → `useCallback` + effect dep. |
+| `src/pages/admin/SchoolManagement.tsx` | Uses shared icon util; `fetchSchools` → `useCallback` + effect dep; **stale-closure bug:** delete now uses functional `setSchools(prev => ...)`. |
+| `src/pages/MenuHistory.tsx`, `PublicMenuHistory.tsx`, `TimSPPG.tsx`, `admin/TimSPPGManagement.tsx`, `user/MenuHariIni.tsx` | Fetch fns wrapped in `useCallback` + effect deps (clears `react-hooks/immutability` "accessed before declared" class of bugs). |
+| `src/hooks/useReports.ts` | **Bug:** mount effect + empty-search effect caused a double fetch on every visit. Merged into one debounced effect that also performs the initial load; `catch (err)` → `catch` (unused binding). |
+
+### Verification
+- `bun run build` ✅ (per-route chunks; new `leafletIcons` chunk)
+- Lint: 48 problems (46 err) → 45 problems (44 err); all 8 `react-hooks/immutability` errors eliminated; 0 new errors
+- Backend boots without MySQL: prints DB warning + stays alive (was exit 1) ✅
+- Remaining lint backlog tracked in "Open issues" above
 
 ---
 
 ## Commands
 ```bash
-bun install          # in api/ and fe/
-bun run dev          # api (bun --watch), fe (vite)
+bun install          # from repo root — installs all workspace deps
+bun run dev          # api (bun --watch, :5000) + fe (vite, :5173) concurrently
+bun run dev:api      # api only
+bun run dev:fe       # fe only
 bun run build        # fe: tsc -b && vite build
 bun run lint         # fe
+bun run db:setup     # create all tables (api: bun src/config/setup_db.js)
+bun run db:admin     # create default admin (api: bun create_admin.js)
+docker compose up -d db   # local Postgres 16 (:5432)
 ```
 
 ## Env
-`api/.env` — see `.env.example`. Vercel: set `DB_*`, `JWT_SECRET`, `CLOUDINARY_*`, `GEMINI_API_KEY`, `ALLOWED_ORIGINS`, `DEMO_MODE=true`; FE: `VITE_API_URL`, `VITE_DEMO_MODE=true`.
+`api/.env` — see `.env.example`. Vercel: set `DB_*`/`DATABASE_URL` (Neon), `JWT_SECRET`, `CLOUDINARY_*`, `GEMINI_API_KEY`, `ALLOWED_ORIGINS`, `DEMO_MODE=true`; FE: `VITE_API_URL` (→ deployed API link) + `VITE_DEMO_MODE=true`. Full flow in `push.md`.

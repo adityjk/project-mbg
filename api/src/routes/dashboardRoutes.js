@@ -7,12 +7,12 @@ router.get('/stats', async (req, res) => {
   // Single round-trip instead of 6 sequential queries
   const sql = `
     SELECT
-      (SELECT COUNT(*) FROM menus) AS totalMenus,
-      (SELECT COUNT(*) FROM reports) AS totalReports,
-      (SELECT COUNT(*) FROM reports WHERE status = 'pending') AS pendingReports,
-      (SELECT COALESCE(AVG(kalori), 0) FROM menus) AS avgKalori,
-      (SELECT COALESCE(AVG(protein), 0) FROM menus) AS avgProtein,
-      (SELECT COALESCE(SUM(jumlah_porsi), 0) FROM menus) AS totalPorsi
+      (SELECT COUNT(*) FROM menus) AS "totalMenus",
+      (SELECT COUNT(*) FROM reports) AS "totalReports",
+      (SELECT COUNT(*) FROM reports WHERE status = 'pending') AS "pendingReports",
+      (SELECT COALESCE(AVG(kalori), 0) FROM menus) AS "avgKalori",
+      (SELECT COALESCE(AVG(protein), 0) FROM menus) AS "avgProtein",
+      (SELECT COALESCE(SUM(jumlah_porsi), 0) FROM menus) AS "totalPorsi"
   `;
 
   try {
